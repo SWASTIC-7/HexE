@@ -1,3 +1,3 @@
 pub mod lexer;
-pub mod parser;
 pub mod opcode;
+pub mod parser;

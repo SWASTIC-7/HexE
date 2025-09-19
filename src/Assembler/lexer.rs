@@ -1,8 +1,20 @@
-pub enum token {
+use super::opcode;
+use super::opcode::OpCode;
+pub enum token_label {
     label(String),
-    instruction(String),
+    instruction(instruction),
     operand(String),
     comment(String),
+}
+
+pub struct instruction {
+    instr: String,
+    opcode: OpCode,
+}
+
+pub struct token {
+    token_label: token_label,
+    token_val: String,
 }
 
 pub fn tokenize(buffer: &str) {
@@ -30,11 +42,21 @@ pub fn tokenize(buffer: &str) {
     }
 
     for el in token_line.iter() {
-        labeling(&el);
+        labeling(el);
         println!("{:?}", el);
     }
 }
 
-fn labeling(token_line: &Vec<String>){
-    
+//giving label enum(token) to the fetched tokens
+fn labeling(token_line: &Vec<String>) -> Vec<token> {
+    let opcode = opcode::build_optab();
+    let arr: Vec<token> = Vec::new();
+    for tokens in token_line.iter() {
+        if let Some(code) = opcode.get(tokens.as_str()) {
+            print!("opcode found")
+        } else {
+            println!("opcode not found");
+        }
+    }
+    arr
 }

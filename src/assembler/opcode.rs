@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct OpCode {
     code: u8,   // opcode value
     format: u8, // instruction format (1, 2, 3/4)

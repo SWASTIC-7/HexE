@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::io::{self, Read};
 
-mod Assembler;
-use Assembler::{lexer, opcode};
+mod assembler;
+use assembler::lexer;
 
 fn main() -> io::Result<()> {
     let mut file = File::open("program.asm").expect("Failed to open the file");

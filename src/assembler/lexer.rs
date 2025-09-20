@@ -7,13 +7,14 @@ pub enum Token {
     Label(String),
     Instruction(Instruction),
     Directive(String),
-    Operand(String),
+    Operand1(String),
+    Operand2(String),
 }
 
 #[derive(Clone, Debug, Default)]
 #[allow(dead_code)]
 pub struct Instruction {
-    instr: String,
+    pub instr: String,
     opcode: OpCode,
 }
 
@@ -49,6 +50,11 @@ fn segregate(buffer: &str) -> Vec<Vec<String>> {
             if c != ' ' {
                 new_token.push(c);
             }
+            if c == ',' {
+                token_vec.push(new_token.clone());
+                new_token.clear();
+                continue;
+            }
         }
         if new_token.is_empty() {
             continue;
@@ -66,6 +72,7 @@ fn labeling(token_line: &[String]) -> Vec<Token> {
     let opcode = opcode::build_optab();
     let mut arr: Vec<Token> = Vec::new();
     let mut check: bool = false;
+    let mut check_for_op1: bool = false;
     for tokens in token_line.iter() {
         if !check {
             if let Some(code) = opcode.get(tokens.as_str()) {
@@ -82,7 +89,12 @@ fn labeling(token_line: &[String]) -> Vec<Token> {
                 arr.push(Token::Label(tokens.clone()));
             }
         } else {
-            arr.push(Token::Operand(tokens.clone()));
+            if !check_for_op1 {
+                arr.push(Token::Operand1(tokens.clone()));
+                check_for_op1 = true;
+            } else {
+                arr.push(Token::Operand2(tokens.clone()));
+            }
         }
     }
     arr

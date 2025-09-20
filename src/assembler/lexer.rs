@@ -15,7 +15,7 @@ pub enum Token {
 #[allow(dead_code)]
 pub struct Instruction {
     pub instr: String,
-    opcode: OpCode,
+    pub opcode: OpCode,
 }
 
 #[warn(unused_assignments)]

@@ -10,10 +10,10 @@ pub enum Command {
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct ParsedToken {
-    label: Option<String>,
+    pub label: Option<String>,
     pub command: Command,
     pub operand1: Option<String>,
-    operand2: Option<String>,
+    pub operand2: Option<String>,
 }
 #[warn(unused_mut)]
 pub fn parser(buffer: &str) -> Vec<ParsedToken> {

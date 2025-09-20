@@ -3,8 +3,8 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Default)]
 #[allow(dead_code)]
 pub struct OpCode {
-    code: u8,   // opcode value
-    format: u8, // instruction format (1, 2, 3/4)
+    pub code: u8,   // opcode value
+    pub format: u8, // instruction format (1, 2, 3/4)
 }
 
 pub fn build_optab() -> HashMap<&'static str, OpCode> {

@@ -10,14 +10,29 @@ pub enum Token {
     Operand(String),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 #[allow(dead_code)]
 pub struct Instruction {
     instr: String,
     opcode: OpCode,
 }
 
-pub fn tokenize(buffer: &str) {
+#[warn(unused_assignments)]
+pub fn tokenize(buffer: &str) -> Vec<Vec<Token>> {
+    let mut lexed_token: Vec<Vec<Token>> = Vec::new();
+    let token_line = segregate(buffer);
+    for el in token_line.iter() {
+        if el.is_empty() {
+            continue;
+        }
+        let labeled_token: Vec<Token> = labeling(el);
+        lexed_token.push(labeled_token);
+        // println!("{:?}", labeled_token);
+    }
+    lexed_token
+}
+
+fn segregate(buffer: &str) -> Vec<Vec<String>> {
     let mut token_vec: Vec<String> = Vec::new();
     let mut token_line: Vec<Vec<String>> = Vec::new();
     for l in buffer.lines() {
@@ -35,7 +50,7 @@ pub fn tokenize(buffer: &str) {
                 new_token.push(c);
             }
         }
-        if new_token == "" {
+        if new_token.is_empty() {
             continue;
         }
         token_vec.push(new_token.clone());
@@ -43,17 +58,11 @@ pub fn tokenize(buffer: &str) {
         token_line.push(token_vec.clone());
         token_vec.clear();
     }
-    for el in token_line.iter() {
-        if el.is_empty() {
-            continue;
-        }
-        let labeled_token: Vec<Token> = labeling(el);
-        println!("{:?}", labeled_token);
-    }
+    token_line
 }
 
 //giving label enum(token) to the fetched tokens
-fn labeling(token_line: &Vec<String>) -> Vec<Token> {
+fn labeling(token_line: &[String]) -> Vec<Token> {
     let opcode = opcode::build_optab();
     let mut arr: Vec<Token> = Vec::new();
     let mut check: bool = false;
@@ -66,7 +75,7 @@ fn labeling(token_line: &Vec<String>) -> Vec<Token> {
                 };
                 arr.push(Token::Instruction(instr));
                 check = true;
-            } else if directive::directives().contains(&tokens) {
+            } else if directive::directives().contains(tokens) {
                 arr.push(Token::Directive(tokens.clone()));
                 check = true;
             } else {

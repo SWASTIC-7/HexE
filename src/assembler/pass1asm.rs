@@ -1,21 +1,34 @@
 use super::parser::Command;
-use super::parser::parser;
+use super::parser::{ParsedToken, parser};
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct SymbolTable {
     pub label: String,
-    pub address: i32,
+    pub address: u32,
 }
 
-pub fn pass1asm(buffer: &str) {
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct LabeledParsedLines {
+    pub parsedtoken: ParsedToken,
+    pub locctr: u32,
+}
+
+pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolTable>) {
     let parsed_lines = parser(buffer);
     println!("Parsed {} lines", parsed_lines.len()); // Debug: check if parser returns data
     let mut symbol_table: Vec<SymbolTable> = Vec::new();
-    let mut locctr: i32 = 0x9999999;
+    let mut labeledparsedline: Vec<LabeledParsedLines> = Vec::new();
+    let mut locctr: u32 = 0x9999999;
     let mut length = 0;
     let mut startaddr = 0x00;
     for lines in parsed_lines.iter() {
+        println!("Processing line: {:?} with loccctr {:x?}", lines, locctr); // Debug: see what each line contains
+        labeledparsedline.push(LabeledParsedLines {
+            parsedtoken: lines.clone(),
+            locctr,
+        });
         match &lines.command {
             Command::Instruction(instr) => {
                 if locctr != 0x9999999 {
@@ -76,8 +89,8 @@ pub fn pass1asm(buffer: &str) {
                     match directive.to_uppercase().as_str() {
                         "START" => {
                             let operand: Option<String> = lines.operand1.clone();
-                            let num: Option<i32> =
-                                operand.as_ref().and_then(|s| s.parse::<i32>().ok());
+                            let num: Option<u32> =
+                                operand.as_ref().and_then(|s| s.parse::<u32>().ok());
                             if let Some(value) = num {
                                 startaddr = value;
                                 locctr = value;
@@ -121,8 +134,8 @@ pub fn pass1asm(buffer: &str) {
                                 });
                             }
                             let operand: Option<String> = lines.operand1.clone();
-                            let num: Option<i32> =
-                                operand.as_ref().and_then(|s| s.parse::<i32>().ok());
+                            let num: Option<u32> =
+                                operand.as_ref().and_then(|s| s.parse::<u32>().ok());
                             if let Some(value) = num {
                                 locctr += 3 * value;
                             }
@@ -137,8 +150,8 @@ pub fn pass1asm(buffer: &str) {
                                 });
                             }
                             let operand: Option<String> = lines.operand1.clone();
-                            let num: Option<i32> =
-                                operand.as_ref().and_then(|s| s.parse::<i32>().ok());
+                            let num: Option<u32> =
+                                operand.as_ref().and_then(|s| s.parse::<u32>().ok());
                             if let Some(value) = num {
                                 locctr += value;
                             }
@@ -153,7 +166,7 @@ pub fn pass1asm(buffer: &str) {
                                 });
                             }
                             let operand: Option<String> = lines.operand1.clone();
-                            let len: Option<i32> = operand.as_ref().map(|s| s.len() as i32);
+                            let len: Option<u32> = operand.as_ref().map(|s| s.len() as u32);
                             if let Some(value) = len {
                                 locctr += value - 3;
                             }
@@ -169,11 +182,11 @@ pub fn pass1asm(buffer: &str) {
                 }
             }
         }
-        println!("Processing line: {:?} with loccctr {:x?}", lines, locctr); // Debug: see what each line contains
     }
 
-    for items in symbol_table {
-        println!("{items:x?}");
-    }
-    println!("{length}");
+    // for items in symbol_table {
+    //     println!("{items:x?}");
+    // }
+    // println!("{length}");
+    (labeledparsedline, length, startaddr, symbol_table)
 }

@@ -88,13 +88,11 @@ fn labeling(token_line: &[String]) -> Vec<Token> {
             } else {
                 arr.push(Token::Label(tokens.clone()));
             }
+        } else if !check_for_op1 {
+            arr.push(Token::Operand1(tokens.clone()));
+            check_for_op1 = true;
         } else {
-            if !check_for_op1 {
-                arr.push(Token::Operand1(tokens.clone()));
-                check_for_op1 = true;
-            } else {
-                arr.push(Token::Operand2(tokens.clone()));
-            }
+            arr.push(Token::Operand2(tokens.clone()));
         }
     }
     arr

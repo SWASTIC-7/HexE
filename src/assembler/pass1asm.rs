@@ -88,6 +88,7 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
                 if locctr == 0x9999999 {
                     match directive.to_uppercase().as_str() {
                         "START" => {
+                            //TODO: add the feature of label starting point address
                             let operand: Option<String> = lines.operand1.clone();
                             let num: Option<u32> =
                                 operand.as_ref().and_then(|s| s.parse::<u32>().ok());

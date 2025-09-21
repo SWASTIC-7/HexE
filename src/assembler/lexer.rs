@@ -39,21 +39,23 @@ fn segregate(buffer: &str) -> Vec<Vec<String>> {
     for l in buffer.lines() {
         let mut new_token: String = String::new();
         for c in l.chars() {
-            if c == ' ' && !new_token.is_empty() {
-                token_vec.push(new_token.clone());
-                new_token.clear();
-            }
             if c == '.' {
                 //breaking the loop of line before comment
                 break;
             }
-            if c != ' ' {
-                new_token.push(c);
-            }
             if c == ',' {
+                if !new_token.is_empty() {
+                    token_vec.push(new_token.clone());
+                    new_token.clear();
+                }
+                continue;
+            }
+            if c == ' ' && !new_token.is_empty() {
                 token_vec.push(new_token.clone());
                 new_token.clear();
-                continue;
+            }
+            if c != ' ' {
+                new_token.push(c);
             }
         }
         if new_token.is_empty() {

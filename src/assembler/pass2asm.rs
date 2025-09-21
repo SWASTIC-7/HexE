@@ -23,7 +23,6 @@ pub enum ObjectRecord {
         start: u32,
     },
 }
-
 pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
     let (labeled_parsed_lines, len, start_addr, symbol_table): (
         Vec<LabeledParsedLines>,
@@ -34,10 +33,19 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
     let mut object_program: Vec<ObjectRecord> = Vec::new();
     let mut base_address = start_addr;
     let mut text_length = 0;
+    let mut text = ObjectRecord::Text {
+        start: start_addr,
+        length: 0,
+        objcodes: Vec::new(),
+    };
     for lines in labeled_parsed_lines.iter() {
-        // if text_length ==0 {
-        //     let text = ObjectRecord::Text::new();
-        // }
+        if text_length == 0 {
+            text = ObjectRecord::Text {
+                start: lines.locctr,
+                length: 0,
+                objcodes: Vec::new(),
+            };
+        }
         match &lines.parsedtoken.command {
             Command::Directive(directive) => match directive.to_uppercase().as_str() {
                 "START" => {
@@ -51,6 +59,17 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                         base_address = sym.address;
                     }
                 }
+                "END" => {
+                    // Add final text record if it has content
+                    if text_length > 0 {
+                        if let ObjectRecord::Text { length, .. } = &mut text {
+                            *length = text_length;
+                        }
+                        object_program.push(text.clone());
+                    }
+                    // Add END record
+                    object_program.push(ObjectRecord::End { start: start_addr });
+                }
                 _ => {
                     print!("not correct directive");
                 }
@@ -63,6 +82,18 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                 match &format {
                     1 => {
                         obj_code = object_code1(opcode);
+                        text_length += 1;
+                        if let ObjectRecord::Text {
+                            length, objcodes, ..
+                        } = &mut text
+                        {
+                            *length = text_length;
+                            objcodes.push(obj_code);
+                        }
+                        if text_length >= 55 {
+                            text_length = 0;
+                            object_program.push(text.clone());
+                        }
                     }
                     2 => {
                         obj_code = object_code2(
@@ -70,6 +101,18 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                             &lines.parsedtoken.operand1.clone(),
                             &lines.parsedtoken.operand2.clone(),
                         );
+                        text_length += 2;
+                        if let ObjectRecord::Text {
+                            length, objcodes, ..
+                        } = &mut text
+                        {
+                            *length = text_length;
+                            objcodes.push(obj_code);
+                        }
+                        if text_length >= 55 {
+                            text_length = 0;
+                            object_program.push(text.clone());
+                        }
                     }
                     3 => {
                         obj_code = object_code3(
@@ -80,6 +123,18 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                             locctr,
                             base_address,
                         );
+                        text_length += 3;
+                        if let ObjectRecord::Text {
+                            length, objcodes, ..
+                        } = &mut text
+                        {
+                            *length = text_length;
+                            objcodes.push(obj_code);
+                        }
+                        if text_length >= 55 {
+                            text_length = 0;
+                            object_program.push(text.clone());
+                        }
                     }
                     4 => {
                         obj_code = object_code4(
@@ -89,6 +144,18 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                             &symbol_table,
                             locctr,
                         );
+                        text_length += 4;
+                        if let ObjectRecord::Text {
+                            length, objcodes, ..
+                        } = &mut text
+                        {
+                            *length = text_length;
+                            objcodes.push(obj_code);
+                        }
+                        if text_length >= 55 {
+                            text_length = 0;
+                            object_program.push(text.clone());
+                        }
                     }
                     _ => {
                         println!(" Invalid format found to make object code");
@@ -96,6 +163,18 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                 }
             }
         }
+    }
+
+    // Add any remaining text record at the end
+    // if text_length > 0 {
+    //     if let ObjectRecord::Text { length, .. } = &mut text {
+    //         *length = text_length;
+    //     }
+    //     object_program.push(text.clone());
+    // }
+
+    for items in &object_program {
+        println!("{items:?}");
     }
     object_program
 }
@@ -143,6 +222,7 @@ pub fn object_code2(opcode: u8, operand1: &Option<String>, operand2: &Option<Str
 }
 
 //object code for format 3
+#[warn(unused_mut)]
 pub fn object_code3(
     opcode: u8,
     operand1: &Option<String>,
@@ -154,11 +234,11 @@ pub fn object_code3(
     let mut flag_n: u8 = 0;
     let mut flag_i: u8 = 0;
     let mut flag_x: u8 = 0;
-    let mut flag_e: u8 = 0;
+    let flag_e: u8 = 0;
     let mut flag_b: u8 = 0;
     let mut flag_p: u8 = 0;
 
-    let reg = registers::register_map();
+    let _reg = registers::register_map();
     if let Some(v) = operand2 {
         if v.to_uppercase() == "X" {
             flag_x = 1;
@@ -219,27 +299,41 @@ pub fn object_code3(
                     // Shift to format 4;
                 }
             }
+        } else {
+            println!("{}", operand);
+            let displacement: i32 = operand.parse().expect("not a vaid string");
+            let disp_12bit = (displacement & 0xFFF) as u16;
+            let first_byte: u8 = opcode | flag_n << 1 | flag_i;
+            let second_byte = (flag_x << 7)
+                | (flag_b << 6)
+                | (flag_p << 5)
+                | (flag_e << 4)
+                | ((disp_12bit >> 8) & 0x0F) as u8;
+            let third_byte = (disp_12bit & 0xFF) as u8;
+
+            return format!("{:02X}{:02X}{:02X}", first_byte, second_byte, third_byte);
         }
     }
     String::new()
 }
 
 // objct code for format 4
+#[warn(unused_mut)]
 pub fn object_code4(
     opcode: u8,
     operand1: &Option<String>,
     operand2: &Option<String>,
     symbol_table: &Vec<SymbolTable>,
-    current_locctr: u32,
+    _current_locctr: u32,
 ) -> String {
     let mut flag_n: u8 = 0;
     let mut flag_i: u8 = 0;
     let mut flag_x: u8 = 0;
-    let mut flag_e: u8 = 1;
-    let mut flag_b: u8 = 0;
-    let mut flag_p: u8 = 0;
+    let flag_e: u8 = 1;
+    let flag_b: u8 = 0;
+    let flag_p: u8 = 0;
 
-    let reg = registers::register_map();
+    let _reg = registers::register_map();
     if let Some(v) = operand2 {
         if v.to_uppercase() == "X" {
             flag_x = 1;

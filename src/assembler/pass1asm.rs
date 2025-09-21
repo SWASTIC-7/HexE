@@ -185,9 +185,9 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
         }
     }
 
-    // for items in symbol_table {
-    //     println!("{items:x?}");
-    // }
+    for items in &symbol_table {
+        println!("{items:x?}");
+    }
     // println!("{length}");
     (labeledparsedline, length, startaddr, symbol_table)
 }

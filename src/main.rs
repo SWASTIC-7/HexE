@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{self, Read};
 
 mod assembler;
-use assembler::pass1asm;
+use assembler::pass2asm;
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -12,7 +12,7 @@ fn main() -> io::Result<()> {
     let mut buffer = String::new();
     file.read_to_string(&mut buffer)?;
     // lexer::tokenize(&buffer);
-    pass1asm::pass1asm(&buffer);
+    pass2asm::pass2asm(&buffer);
     // println!("{buffer}");
     Ok(())
 }

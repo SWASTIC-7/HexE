@@ -1,20 +1,6 @@
 use super::lexer;
+use crate::predefined::common::{Command, Instruction, ParsedToken};
 
-use lexer::Instruction;
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub enum Command {
-    Directive(String),
-    Instruction(Instruction),
-}
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub struct ParsedToken {
-    pub label: Option<String>,
-    pub command: Command,
-    pub operand1: Option<String>,
-    pub operand2: Option<String>,
-}
 #[warn(unused_mut)]
 pub fn parser(buffer: &str) -> Vec<ParsedToken> {
     let lexed_token = lexer::tokenize(buffer);

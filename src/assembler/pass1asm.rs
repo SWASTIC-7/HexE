@@ -1,19 +1,5 @@
-use super::parser::Command;
-use super::parser::{ParsedToken, parser};
-
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub struct SymbolTable {
-    pub label: String,
-    pub address: u32,
-}
-
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub struct LabeledParsedLines {
-    pub parsedtoken: ParsedToken,
-    pub locctr: u32,
-}
+use super::parser::parser;
+use crate::predefined::common::{Command, LabeledParsedLines, SymbolTable};
 
 pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolTable>) {
     let parsed_lines = parser(buffer);

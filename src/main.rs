@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io::{self, Read};
 
 mod assembler;
+mod predefined;
+mod simulator;
 use assembler::pass2asm;
 
 fn main() -> io::Result<()> {

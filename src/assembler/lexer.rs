@@ -1,6 +1,7 @@
-use super::directive;
-use super::opcode;
-use super::opcode::OpCode;
+use crate::predefined::common::Instruction;
+use crate::predefined::directive;
+use crate::predefined::opcode;
+use opcode::OpCode;
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
 pub enum Token {
@@ -9,13 +10,6 @@ pub enum Token {
     Directive(String),
     Operand1(String),
     Operand2(String),
-}
-
-#[derive(Clone, Debug, Default)]
-#[allow(dead_code)]
-pub struct Instruction {
-    pub instr: String,
-    pub opcode: OpCode,
 }
 
 #[warn(unused_assignments)]

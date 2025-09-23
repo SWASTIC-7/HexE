@@ -1,28 +1,9 @@
-use super::parser::Command;
-use super::pass1asm::{LabeledParsedLines, SymbolTable, pass1asm};
-use super::registers;
+use super::pass1asm::pass1asm;
+use crate::predefined::common::{
+    Command, LabeledParsedLines, OBJECTPROGRAM, ObjectRecord, SymbolTable,
+};
+use crate::predefined::registers;
 
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub enum ObjectRecord {
-    Header {
-        name: String,
-        start: u32,
-        length: u32,
-    },
-    Text {
-        start: u32,
-        length: u8,
-        objcodes: Vec<String>,
-    },
-    Modification {
-        address: u32,
-        length: u8,
-    },
-    End {
-        start: u32,
-    },
-}
 pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
     let (labeled_parsed_lines, len, start_addr, symbol_table): (
         Vec<LabeledParsedLines>,
@@ -30,7 +11,7 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
         u32,
         Vec<SymbolTable>,
     ) = pass1asm(buffer);
-    let mut object_program: Vec<ObjectRecord> = Vec::new();
+    let mut object_program = OBJECTPROGRAM.lock().unwrap();
     let mut base_address = start_addr;
     let mut text_length = 0;
     let mut text = ObjectRecord::Text {
@@ -173,10 +154,10 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
     //     object_program.push(text.clone());
     // }
 
-    for items in &object_program {
-        println!("{items:?}");
-    }
-    object_program
+    // for items in &object_program {
+    //     println!("{items:?}");
+    // }
+    object_program.to_vec()
 }
 
 fn header_record(prog_name: Option<String>, len: u32, starting_addr: u32) -> ObjectRecord {
@@ -224,6 +205,7 @@ pub fn object_code2(opcode: u8, operand1: &Option<String>, operand2: &Option<Str
 //object code for format 3
 #[warn(unused_mut)]
 pub fn object_code3(
+    //TODO: Add feature of literal
     opcode: u8,
     operand1: &Option<String>,
     operand2: &Option<String>,

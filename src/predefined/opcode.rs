@@ -726,3 +726,68 @@ pub fn build_optab() -> HashMap<&'static str, OpCode> {
     );
     table
 }
+
+pub fn reverse_optab() -> HashMap<u8, &'static str> {
+    let mut reverse = HashMap::new();
+
+    reverse.insert(0x18, "ADD");
+    reverse.insert(0x58, "ADDF");
+    reverse.insert(0x90, "ADDR");
+    reverse.insert(0x40, "AND");
+    reverse.insert(0xB4, "CLEAR");
+    reverse.insert(0x28, "COMP");
+    reverse.insert(0x88, "COMPF");
+    reverse.insert(0xA0, "COMPR");
+    reverse.insert(0x24, "DIV");
+    reverse.insert(0x64, "DIVF");
+    reverse.insert(0x9C, "DIVR");
+    reverse.insert(0xC4, "FIX");
+    reverse.insert(0xC0, "FLOAT");
+    reverse.insert(0xF4, "HIO");
+    reverse.insert(0x3C, "J");
+    reverse.insert(0x30, "JEQ");
+    reverse.insert(0x34, "JGT");
+    reverse.insert(0x38, "JLT");
+    reverse.insert(0x48, "JSUB");
+    reverse.insert(0x00, "LDA");
+    reverse.insert(0x68, "LDB");
+    reverse.insert(0x50, "LDCH");
+    reverse.insert(0x70, "LDF");
+    reverse.insert(0x08, "LDL");
+    reverse.insert(0x6C, "LDS");
+    reverse.insert(0x74, "LDT");
+    reverse.insert(0x04, "LDX");
+    reverse.insert(0xD0, "LPS");
+    reverse.insert(0x20, "MUL");
+    reverse.insert(0x60, "MULF");
+    reverse.insert(0x98, "MULR");
+    reverse.insert(0xC8, "NORM");
+    reverse.insert(0x44, "OR");
+    reverse.insert(0xD8, "RD");
+    reverse.insert(0xAC, "RMO");
+    reverse.insert(0x4C, "RSUB");
+    reverse.insert(0xA4, "SHIFTL");
+    reverse.insert(0xA8, "SHIFTR");
+    reverse.insert(0xF0, "SIO");
+    reverse.insert(0xEC, "SSK");
+    reverse.insert(0x0C, "STA");
+    reverse.insert(0x78, "STB");
+    reverse.insert(0x54, "STCH");
+    reverse.insert(0x80, "STF");
+    reverse.insert(0xD4, "STI");
+    reverse.insert(0x14, "STL");
+    reverse.insert(0x7C, "STS");
+    reverse.insert(0xE8, "STSW");
+    reverse.insert(0x84, "STT");
+    reverse.insert(0x10, "STX");
+    reverse.insert(0x1C, "SUB");
+    reverse.insert(0x5C, "SUBF");
+    reverse.insert(0x94, "SUBR");
+    reverse.insert(0xB0, "SVC");
+    reverse.insert(0xE0, "TD");
+    reverse.insert(0x2C, "TIX");
+    reverse.insert(0xB8, "TIXR");
+    reverse.insert(0xDC, "WD");
+
+    reverse
+}

@@ -240,7 +240,7 @@ pub fn object_code3(
 
         if let Some(sym) = symbol_table.iter().find(|sym| sym.label == operand) {
             let target_addr = sym.address;
-            let program_counter = current_locctr + 3; // For format 3, next instruction is +3 bytes
+            let program_counter = current_locctr + 3;
             let mut displacement = target_addr as i32 - program_counter as i32;
             if displacement >= -2048 && displacement <= 2047 {
                 flag_p = 1;
@@ -363,3 +363,5 @@ pub fn object_code4(
     }
     String::new()
 }
+
+//TODO : add the feature of Literals support

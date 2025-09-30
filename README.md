@@ -11,3 +11,9 @@
 - [ ] Supports all the Directive  
 - [ ] Simulator
 
+## Feature
+- [ ] supports all the sic/xe instruction
+- [ ] supports all the sic/xe directive
+- [ ] supports literals
+- [ ] supports base 
+- [ ] supports all the features

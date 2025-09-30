@@ -62,10 +62,25 @@ pub struct LabeledParsedLines {
     pub locctr: u32,
 }
 
+// flags =
+// n i x b p e  -- addressing modes to check
+// indirect , immediate, indexed, base relative, pc relative, format
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct AddressFlags {
+    n: bool,
+    i: bool,
+    x: bool,
+    b: bool,
+    p: bool,
+    e: bool,
+}
+
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct DisAssembledToken {
     locctr: u32,
     command: Command,
+    flags: AddressFlags,
     address: Option<u32>,
 }

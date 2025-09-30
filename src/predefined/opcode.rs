@@ -727,6 +727,7 @@ pub fn build_optab() -> HashMap<&'static str, OpCode> {
     table
 }
 
+#[allow(dead_code)]
 pub fn reverse_optab() -> HashMap<u8, (&'static str, u8)> {
     let mut reverse = HashMap::new();
 
@@ -793,14 +794,15 @@ pub fn reverse_optab() -> HashMap<u8, (&'static str, u8)> {
     reverse
 }
 
+#[allow(dead_code)]
 pub fn get_instruction_name(opcode: u8) -> Option<&'static str> {
     reverse_optab().get(&opcode).map(|(name, _)| *name)
 }
-
+#[allow(dead_code)]
 pub fn get_instruction_format(opcode: u8) -> Option<u8> {
     reverse_optab().get(&opcode).map(|(_, format)| *format)
 }
-
+#[allow(dead_code)]
 pub fn get_instruction_info(opcode: u8) -> Option<(&'static str, u8)> {
     reverse_optab().get(&opcode).copied()
 }

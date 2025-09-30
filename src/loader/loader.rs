@@ -1,4 +1,5 @@
 use crate::predefined::common::ObjectRecord;
+use crate::predefined::opcode::{reverse_optab};
 
 //Object program structure
 //H == 3byte name ,3 byte starting addr of program,  3byte length
@@ -6,15 +7,18 @@ use crate::predefined::common::ObjectRecord;
 //E == 3byte starting address of executable instructions
 
 pub fn loader(buffer: String) -> Vec<ObjectRecord> {
-    let mut parsed_obj_prog: Vec<ObjectRecord> = Vec::new(); // Fixed: added 'mut'
-    for line in buffer.lines() { // Fixed: removed .iter()
-        let trimmed_line = line.trim(); // Fixed: typo 'timmmed_line'
+    let mut parsed_obj_prog: Vec<ObjectRecord> = Vec::new(); 
+    for line in buffer.lines() { 
+        let trimmed_line = line.trim(); 
         if trimmed_line.is_empty() {
             continue;
         }
-        let record_header: char = trimmed_line.chars().next().unwrap(); // Fixed: get first char
-        let record: &str = &trimmed_line[1..]; // Fixed: typo 'trimmed_lines'
-        
+        // Remove spaces and ^ characters from the line
+        trimmed_line = trimmed_line.chars()
+            .filter(|&c| c != ' ' && c != '^')
+            .collect();
+        let record_header: char = trimmed_line.chars().next().unwrap();
+        let record: &str = &trimmed_line[1..]; 
         match record_header {
             'H' => {
                 let program_name = &record[0..6];
@@ -42,8 +46,38 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
                 
                
                 let mut objcodes = Vec::new();
-                let mut i = 0;
-               
+                let mut i=0;
+                while i < obj_code.len()-1 {
+
+                    let s = &obj_code[i..i+2];
+                    
+                    if let Some (format) = get_instruction_format(s){
+                        if format == 1 {
+                            objcodes.push(&obj_code[i..i+2]);
+                            i=i+2;
+                        }
+                        if format == 2 {
+                            objcodes.push(&obj_code[i..i+4]);
+                            i=i+4;
+                        }
+                    }else {
+                        if let Ok(byte_val) = u8::from_str_radix(s, 16) {
+                        let opcode = byte_val & 0xFC; 
+                        if let Some (format) = get_instruction_format(opcode){
+                        if format == 3 {
+                            objcodes.push(&obj_code[i..i+6]);
+                            i=i+6;
+                        }
+                        if format == 4 {
+                            objcodes.push(&obj_code[i..i+8]);
+                            i=i+8;
+                        }
+                    }
+                }
+                    }
+                    
+                }
+                
                 
                 let parsed_obj = ObjectRecord::Text {
                     start: start_addr,

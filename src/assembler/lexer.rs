@@ -1,7 +1,6 @@
 use crate::predefined::common::Instruction;
 use crate::predefined::directive;
 use crate::predefined::opcode;
-use opcode::OpCode;
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
 pub enum Token {

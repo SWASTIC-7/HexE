@@ -59,7 +59,7 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                 let format = instr.opcode.format.clone();
                 let opcode = instr.opcode.code.clone();
                 let locctr = lines.locctr;
-                let mut obj_code = String::new();
+                let obj_code;
                 match &format {
                     1 => {
                         obj_code = object_code1(opcode);
@@ -146,7 +146,7 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
         }
     }
 
-    // Add any remaining text record at the end
+    //Add any remaining text record at the end
     // if text_length > 0 {
     //     if let ObjectRecord::Text { length, .. } = &mut text {
     //         *length = text_length;
@@ -154,7 +154,7 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
     //     object_program.push(text.clone());
     // }
 
-    // for items in &object_program {
+    // for items in object_program.iter() {
     //     println!("{items:?}");
     // }
     object_program.to_vec()

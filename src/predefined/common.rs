@@ -76,11 +76,19 @@ pub struct AddressFlags {
     e: bool,
 }
 
+// registers for format 2
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct Reg {
+    r1: String,
+    r2: String,
+}
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct DisAssembledToken {
     locctr: u32,
     command: Command,
-    flags: AddressFlags,
+    flags: Option<AddressFlags>,
     address: Option<u32>,
+    reg: Option<Reg>,
 }

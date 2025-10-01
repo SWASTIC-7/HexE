@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-/// Returns a HashMap of SIC/XE registers and their numeric codes
 pub fn register_map() -> HashMap<&'static str, u8> {
     let mut map = HashMap::new();
     map.insert("A", 0x0);
@@ -12,5 +11,19 @@ pub fn register_map() -> HashMap<&'static str, u8> {
     map.insert("F", 0x6);
     map.insert("PC", 0x8);
     map.insert("SW", 0x9);
+    map
+}
+
+pub fn reverse_register_map() -> HashMap<u8, &'static str> {
+    let mut map = HashMap::new();
+    map.insert(0x0, "A");
+    map.insert(0x1, "X");
+    map.insert(0x2, "L");
+    map.insert(0x3, "B");
+    map.insert(0x4, "S");
+    map.insert(0x5, "T");
+    map.insert(0x6, "F");
+    map.insert(0x8, "PC");
+    map.insert(0x9, "SW");
     map
 }

@@ -1,9 +1,10 @@
 use crate::predefined::opcode::{reverse_optab};
 use crate::assembler::LabeledParsedLines;
 use craate::predefined::common::{OBJECTPROGRAM, ObjectRecord, DisAssembledToken,Command, Instruction, Reg, AddressFlags};
-pub fn disassemble() {
+pub fn disassemble() -> Vec<DisAssembledToken> {
     let mut starting_addr = 0u32; 
     let locctr: u32 = 0;
+    let parsed_dissassembled_code: Vec<DisAssembledToken> = Vec::new();
     for lines in OBJECTPROGRAM.iter() {
         match lines {
             ObjectRecord::Header { name, start, length } => { 
@@ -34,6 +35,7 @@ pub fn disassemble() {
                                 address: None,
                                 reg: None
                             };
+                            parsed_dissassembled_code.push(code_line);
                             
                         }
                         2 =>{
@@ -60,7 +62,7 @@ pub fn disassemble() {
                                     r2
                                 }
                             };
-
+                            parsed_dissassembled_code.push(code_line);
                         }
                         3 => {
                             //format 3
@@ -91,6 +93,7 @@ pub fn disassemble() {
                                     address: Some(displacement as u32),
                                     reg: None
                                 };
+                                parsed_dissassembled_code.push(code_line);
                         }
                         4 => {
                             //format 4
@@ -123,6 +126,7 @@ pub fn disassemble() {
                                     address: Some(displacement as u32),
                                     reg: None
                                 };
+                            parsed_dissassembled_code.push(code_line);
                         }
                     }
                 }
@@ -141,4 +145,5 @@ pub fn disassemble() {
             }
         }
     }
+    parsed_dissassembled_code
 }

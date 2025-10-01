@@ -85,7 +85,6 @@ pub enum AddressingMode {
 impl Opcode {
     pub fn execute(&self, machine: &mut Machine, operand: u32, mode: AddressingMode) {
         match self {
-            // ---- Data Movement ----
             Opcode::LDA => self.load_accumulator(machine, operand, mode),
             Opcode::LDX => self.load_index(machine, operand, mode),
             Opcode::LDL => self.load_linkage(machine, operand, mode),
@@ -104,8 +103,6 @@ impl Opcode {
             Opcode::STI => self.store_interval_timer(machine, operand, mode),
             Opcode::STCH => self.store_character(machine, operand, mode),
             Opcode::STSW => self.store_status_word(machine, operand, mode),
-
-            // ---- Arithmetic ----
             Opcode::ADD => self.add(machine, operand, mode),
             Opcode::ADDF => self.add_float(machine, operand, mode),
             Opcode::SUB => self.subtract(machine, operand, mode),
@@ -114,13 +111,9 @@ impl Opcode {
             Opcode::MULF => self.multiply_float(machine, operand, mode),
             Opcode::DIV => self.divide(machine, operand, mode),
             Opcode::DIVF => self.divide_float(machine, operand, mode),
-
-            // ---- Comparison ----
             Opcode::COMP => self.compare(machine, operand, mode),
             Opcode::COMPF => self.compare_float(machine, operand, mode),
             Opcode::COMPR => self.compare_register(machine, operand),
-
-            // ---- Register Ops (Format 2) ----
             Opcode::ADDR => self.add_register(machine, operand),
             Opcode::SUBR => self.subtract_register(machine, operand),
             Opcode::MULR => self.multiply_register(machine, operand),
@@ -130,8 +123,6 @@ impl Opcode {
             Opcode::TIXR => self.test_index_register(machine, operand),
             Opcode::SHIFTL => self.shift_left(machine, operand),
             Opcode::SHIFTR => self.shift_right(machine, operand),
-
-            // ---- Control Transfer ----
             Opcode::J => self.jump(machine, operand),
             Opcode::JEQ => self.jump_equal(machine, operand),
             Opcode::JGT => self.jump_greater(machine, operand),
@@ -139,16 +130,12 @@ impl Opcode {
             Opcode::JSUB => self.jump_subroutine(machine, operand),
             Opcode::RSUB => self.return_subroutine(machine),
             Opcode::TIX => self.test_index(machine, operand, mode),
-
-            // ---- Input/Output ----
             Opcode::RD => self.read_device(machine, operand, mode),
             Opcode::WD => self.write_device(machine, operand, mode),
             Opcode::TD => self.test_device(machine, operand, mode),
             Opcode::SIO => self.start_io(machine),
             Opcode::TIO => self.test_io(machine),
             Opcode::HIO => self.halt_io(machine),
-
-            // ---- Misc ----
             Opcode::FIX => self.fix_float(machine),
             Opcode::FLOAT => self.float_convert(machine),
             Opcode::NORM => self.normalize_float(machine),
@@ -158,7 +145,6 @@ impl Opcode {
         }
     }
 
-    // Helper functions
     fn get_effective_address(&self, machine: &Machine, operand: u32, mode: &AddressingMode) -> u32 {
         match mode {
             AddressingMode::Direct => operand,
@@ -245,7 +231,6 @@ impl Opcode {
         }
     }
 
-    // ---- Data Movement Instructions ----
     fn load_accumulator(&self, machine: &mut Machine, operand: u32, mode: AddressingMode) {
         let value = self.get_operand_value(machine, operand, &mode);
         machine.reg_a = value;
@@ -389,7 +374,6 @@ impl Opcode {
         }
     }
 
-    // ---- Comparison Instructions ----
     fn compare(&self, machine: &mut Machine, operand: u32, mode: AddressingMode) {
         let value = self.get_operand_value(machine, operand, &mode);
         machine.cc = if machine.reg_a < value {
@@ -427,7 +411,6 @@ impl Opcode {
         };
     }
 
-    // ---- Register Operations (Format 2) ----
     fn add_register(&self, machine: &mut Machine, operand: u32) {
         let r1 = (operand >> 4) & 0xF;
         let r2 = operand & 0xF;
@@ -501,7 +484,6 @@ impl Opcode {
         self.set_register_value(machine, r1 as u8, val >> n);
     }
 
-    // ---- Control Transfer Instructions ----
     fn jump(&self, machine: &mut Machine, operand: u32) {
         machine.reg_pc = operand;
     }
@@ -545,7 +527,6 @@ impl Opcode {
         };
     }
 
-    // ---- Input/Output Instructions ----
     fn read_device(&self, machine: &mut Machine, operand: u32, mode: AddressingMode) {
         // Read from device - implementation specific
         let _device = self.get_operand_value(machine, operand, &mode);
@@ -581,7 +562,6 @@ impl Opcode {
         println!("Halting I/O operation");
     }
 
-    // ---- Miscellaneous Instructions ----
     fn fix_float(&self, machine: &mut Machine) {
         machine.reg_a = machine.reg_f as u32;
     }

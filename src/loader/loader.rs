@@ -1,4 +1,4 @@
-use crate::predefined::common::ObjectRecord;
+use crate::predefined::common::{ObjectRecord, OBJECTPROGRAM};
 use crate::predefined::opcode::{reverse_optab};
 
 //Object program structure
@@ -7,7 +7,8 @@ use crate::predefined::opcode::{reverse_optab};
 //E == 3byte starting address of executable instructions
 
 pub fn loader(buffer: String) -> Vec<ObjectRecord> {
-    let mut parsed_obj_prog: Vec<ObjectRecord> = Vec::new(); 
+    let mut parsed_obj_prog = OBJECTPROGRAM.lock().unwrap();
+
     for line in buffer.lines() { 
         let trimmed_line = line.trim(); 
         if trimmed_line.is_empty() {

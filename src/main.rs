@@ -1,13 +1,14 @@
+use crossterm::event::{self, Event};
+use ratatui::{Frame, text::Text};
 use std::env;
 use std::fs::File;
 use std::io::{self, Read};
-
 mod assembler;
 mod disassembler;
 mod loader;
 mod predefined;
 mod simulator;
-use assembler::pass2asm;
+mod tui;
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -19,6 +20,7 @@ fn main() -> io::Result<()> {
     // pass2asm::pass2asm(&buffer);
     // loader::loader::loader(buffer);
     simulator::sim::simulator(buffer);
-    // println!("{buffer}");
+
+    //  tui::tui::list::list();
     Ok(())
 }

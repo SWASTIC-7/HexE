@@ -2,11 +2,14 @@ use crate::predefined::common::{
     AddressFlags, Command, DisAssembledToken, Instruction, OBJECTPROGRAM, ObjectRecord, Reg,
 };
 use crate::predefined::opcode::{OpCode, reverse_optab};
+use crate::predefined::registers::reverse_register_map;
 use hex;
+
 pub fn disassemble() -> Vec<DisAssembledToken> {
     let mut starting_addr = 0u32;
     let mut locctr: u32 = 0;
     let mut parsed_dissassembled_code: Vec<DisAssembledToken> = Vec::new();
+
     for lines in OBJECTPROGRAM.lock().unwrap().iter() {
         match lines {
             ObjectRecord::Header {
@@ -14,34 +17,38 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 start,
                 length,
             } => {
-                let file_name = name;
+                let _file_name = name;
                 starting_addr = *start;
                 locctr = starting_addr;
-                let prog_length = *length;
+                let _prog_length = *length;
             }
             ObjectRecord::Text {
                 start,
                 length,
                 objcodes,
             } => {
-                let start_text_addr = *start;
-                let text_section_length = *length;
+                let _start_text_addr = *start;
+                let _text_section_length = *length;
+                locctr = *start; // Set locctr to text section start
+
                 for item in objcodes.iter() {
-                    match item.len() / 2 {
+                    let instruction_size = match item.len() / 2 {
                         1 => {
                             //format 1
                             let reverse_table = reverse_optab();
-                            let mut instr_name = reverse_table
-                                .get(&u8::from_str_radix(item, 16).expect("Invalid hex string"));
+                            let opcode = u8::from_str_radix(item, 16).expect("Invalid hex string");
+                            let instr_name = reverse_table.get(&opcode);
+
                             let instr = Instruction {
                                 instr: instr_name
                                     .map(|(name, _)| name.to_string())
                                     .unwrap_or_else(|| "UNKNOWN".to_string()),
                                 opcode: OpCode {
-                                    code: u8::from_str_radix(item, 16).expect("Invalid hex string"),
+                                    code: opcode,
                                     format: 1,
                                 },
                             };
+
                             let code_line = DisAssembledToken {
                                 locctr: locctr,
                                 command: Command::Instruction(instr),
@@ -50,12 +57,15 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                 reg: None,
                             };
                             parsed_dissassembled_code.push(code_line);
+                            1 // Return instruction size
                         }
                         2 => {
                             //format 2
                             let bytes = hex::decode(item).expect("Invalid hex string");
                             let reverse_table = reverse_optab();
-                            let mut instr_name = reverse_table.get(&bytes[0]);
+                            let instr_name = reverse_table.get(&bytes[0]);
+                            let register_map = reverse_register_map();
+
                             let instr = Instruction {
                                 instr: instr_name
                                     .map(|(name, _)| name.to_string())
@@ -65,35 +75,51 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                     format: 2,
                                 },
                             };
+
                             let b = bytes[1];
                             let r1 = (b & 0xF0) >> 4;
                             let r2 = b & 0x0F;
+
+                            // Convert register numbers to names
+                            let r1_name = register_map
+                                .get(&r1)
+                                .map(|s| s.to_string())
+                                .unwrap_or_else(|| format!("R{}", r1));
+                            let r2_name = register_map
+                                .get(&r2)
+                                .map(|s| s.to_string())
+                                .unwrap_or_else(|| format!("R{}", r2));
+
                             let code_line = DisAssembledToken {
                                 locctr: locctr,
                                 command: Command::Instruction(instr),
                                 flags: None,
                                 address: None,
                                 reg: Some(Reg {
-                                    r1: r1.to_string(),
-                                    r2: r2.to_string(),
+                                    r1: r1_name,
+                                    r2: r2_name,
                                 }),
                             };
                             parsed_dissassembled_code.push(code_line);
+                            2 // Return instruction size
                         }
                         3 => {
                             //format 3
                             let bytes = hex::decode(item).expect("invalid hex string");
                             let reverse_table = reverse_optab();
-                            let mut instr_name = reverse_table.get(&(bytes[0] & 0xFC));
+                            let opcode = bytes[0] & 0xFC;
+                            let instr_name = reverse_table.get(&opcode);
+
                             let instr = Instruction {
                                 instr: instr_name
                                     .map(|(name, _)| name.to_string())
                                     .unwrap_or_else(|| "UNKNOWN".to_string()),
                                 opcode: OpCode {
-                                    code: bytes[0] & 0xFC,
+                                    code: opcode,
                                     format: 3,
                                 },
                             };
+
                             let flags = AddressFlags {
                                 i: (bytes[0] & 0b00000001) != 0,
                                 n: (bytes[0] & 0b00000010) != 0,
@@ -113,22 +139,25 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                 reg: None,
                             };
                             parsed_dissassembled_code.push(code_line);
+                            3 // Return instruction size
                         }
                         4 => {
                             //format 4
-
                             let bytes = hex::decode(item).expect("invalid hex string");
                             let reverse_table = reverse_optab();
-                            let mut instr_name = reverse_table.get(&(bytes[0] & 0xFC));
+                            let opcode = bytes[0] & 0xFC;
+                            let instr_name = reverse_table.get(&opcode);
+
                             let instr = Instruction {
                                 instr: instr_name
                                     .map(|(name, _)| name.to_string())
                                     .unwrap_or_else(|| "UNKNOWN".to_string()),
                                 opcode: OpCode {
-                                    code: bytes[0] & 0xFC,
+                                    code: opcode,
                                     format: 4,
                                 },
                             };
+
                             let flags = AddressFlags {
                                 i: (bytes[0] & 0b00000001) != 0,
                                 n: (bytes[0] & 0b00000010) != 0,
@@ -141,19 +170,29 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                             let displacement = ((bytes[1] & 0x0F) as u32) << 16
                                 | (bytes[2] as u32) << 8
                                 | (bytes[3] as u32);
+
                             let code_line = DisAssembledToken {
                                 locctr: locctr,
                                 command: Command::Instruction(instr),
                                 flags: Some(flags),
-                                address: Some(displacement as u32),
+                                address: Some(displacement),
                                 reg: None,
                             };
                             parsed_dissassembled_code.push(code_line);
+                            4 // Return instruction size
                         }
                         _ => {
-                            println!("unexpected pattern found");
+                            println!(
+                                "Unexpected instruction length: {} bytes for instruction: {}",
+                                item.len() / 2,
+                                item
+                            );
+                            0 // No size increment for unknown instructions
                         }
-                    }
+                    };
+
+                    // Increment location counter by instruction size
+                    locctr += instruction_size;
                 }
             }
             ObjectRecord::End { start } => {
@@ -166,12 +205,91 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 }
             }
             ObjectRecord::Modification { address, length } => {
-                // TODO: add modification in objectprogram feature
+                // TODO: Handle modification records
+                println!(
+                    "Modification record found at address {:06X}, length: {}",
+                    address, length
+                );
             }
         }
     }
-    for items in parsed_dissassembled_code.iter() {
-        println!("{:?}", items);
+
+    // Print disassembled instructions in a readable format
+    println!("\n=== DISASSEMBLED PROGRAM ===");
+    for item in &parsed_dissassembled_code {
+        println!("{}", format_disassembled_instruction(item));
     }
+
     parsed_dissassembled_code
+}
+
+// Helper function to format disassembled instructions for display
+fn format_disassembled_instruction(token: &DisAssembledToken) -> String {
+    match &token.command {
+        Command::Instruction(instr) => {
+            let mut result = format!("{:06X}  {:<8}", token.locctr, instr.instr);
+
+            match instr.opcode.format {
+                1 => {
+                    // Format 1: Just opcode
+                    result
+                }
+                2 => {
+                    // Format 2: Register operations
+                    if let Some(reg) = &token.reg {
+                        result.push_str(&format!(" {},{}", reg.r1, reg.r2));
+                    }
+                    result
+                }
+                3 | 4 => {
+                    // Format 3/4: Address operations
+                    if let (Some(flags), Some(address)) = (&token.flags, &token.address) {
+                        let mut operand = String::new();
+
+                        // Determine addressing mode based on flags
+                        if flags.i && !flags.n {
+                            // Immediate addressing
+                            operand.push('#');
+                            operand.push_str(&format!("{}", address));
+                        } else if !flags.i && flags.n {
+                            // Indirect addressing
+                            operand.push('@');
+                            operand.push_str(&format!("{:06X}", address));
+                        } else {
+                            // Direct addressing
+                            operand.push_str(&format!("{:06X}", address));
+                        }
+
+                        // Add indexed flag
+                        if flags.x {
+                            operand.push_str(",X");
+                        }
+
+                        result.push_str(&format!(" {}", operand));
+
+                        // Add addressing mode indicators
+                        let mut mode_info = String::new();
+                        if flags.p {
+                            mode_info.push_str(" [PC-rel]");
+                        }
+                        if flags.b {
+                            mode_info.push_str(" [Base-rel]");
+                        }
+                        if flags.e && instr.opcode.format == 4 {
+                            mode_info.push_str(" [Extended]");
+                        }
+
+                        if !mode_info.is_empty() {
+                            result.push_str(&mode_info);
+                        }
+                    }
+                    result
+                }
+                _ => result,
+            }
+        }
+        Command::Directive(dir) => {
+            format!("{:06X}  {}", token.locctr, dir)
+        }
+    }
 }

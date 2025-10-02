@@ -279,6 +279,7 @@ pub fn object_code3(
                     return format!("{:02X}{:02X}{:02X}", first_byte, second_byte, third_byte);
                 } else {
                     // Shift to format 4;
+                    // TODO: add the implementation of extending to format 4 if no base is set
                 }
             }
         } else {

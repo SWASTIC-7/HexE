@@ -133,8 +133,8 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
             }
         }
     }
-    for items in parsed_obj_prog.iter() {
-        println!("{:?}", items);
-    }
+    // for items in parsed_obj_prog.iter() {
+    //     println!("{:?}", items);
+    // }
     parsed_obj_prog.clone()
 }

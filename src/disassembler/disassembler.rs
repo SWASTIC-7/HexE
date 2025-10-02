@@ -62,7 +62,8 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                         2 => {
                             //format 2
                             let bytes = hex::decode(item).expect("Invalid hex string");
-                            let reverse_table = reverse_optab();
+                            let reverse_table: std::collections::HashMap<u8, (&'static str, u8)> =
+                                reverse_optab();
                             let instr_name = reverse_table.get(&bytes[0]);
                             let register_map = reverse_register_map();
 

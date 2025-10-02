@@ -19,8 +19,11 @@ fn main() -> io::Result<()> {
     // lexer::tokenize(&buffer);
     // pass2asm::pass2asm(&buffer);
     // loader::loader::loader(buffer);
-    simulator::sim::simulator(buffer);
-
+    // simulator::sim::simulator(buffer);
+    let mut sim = simulator::sim::Simulator::new();
+    sim.load_program(buffer);
+    // sim.add_breakpoint(0x1000);
+    sim.step();
     //  tui::tui::list::list();
     Ok(())
 }

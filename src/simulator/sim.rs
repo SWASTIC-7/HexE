@@ -28,13 +28,10 @@ impl Simulator {
     }
 
     pub fn load_program(&mut self, buffer: String) {
-        // Load object program into memory
         loader::loader(buffer);
         self.find_program_start();
 
-        // Set PC to program start address
         self.machine.reg_pc = self.program_start;
-        // Disassemble the loaded program
         self.instructions = disassembler::disassemble();
         println!("Loaded {} instructions", self.instructions.len());
     }
@@ -66,7 +63,6 @@ impl Simulator {
             }
         }
 
-        // If no header found, try to use the first instruction address
         if self.program_start == 0 && !self.instructions.is_empty() {
             self.program_start = self.instructions[0].locctr;
         }
@@ -77,15 +73,12 @@ impl Simulator {
     }
 
     pub fn fetch_decode_execute(&mut self) -> bool {
-        // Find instruction at current PC
         if let Some(instr) = self.find_instruction_at_pc(self.machine.reg_pc).cloned() {
             println!(
                 "Executing at {:06X}: {}",
                 self.machine.reg_pc,
                 self.format_instruction(&instr)
             );
-
-            // Execute the instruction
             self.execute_instruction(&instr);
             true
         } else {
@@ -141,7 +134,6 @@ impl Simulator {
                 }
             }
             Command::Directive(_) => {
-                // Skip directives during execution
                 self.machine.reg_pc += 1;
             }
         }

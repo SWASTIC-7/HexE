@@ -73,8 +73,7 @@ pub enum Opcode {
     LPS,
     SVC,
 }
-
-#[derive(Debug, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum AddressingMode {
     Direct,
     Indirect,

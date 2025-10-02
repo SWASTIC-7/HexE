@@ -68,27 +68,27 @@ pub struct LabeledParsedLines {
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct AddressFlags {
-    n: bool,
-    i: bool,
-    x: bool,
-    b: bool,
-    p: bool,
-    e: bool,
+    pub n: bool,
+    pub i: bool,
+    pub x: bool,
+    pub b: bool,
+    pub p: bool,
+    pub e: bool,
 }
 
 // registers for format 2
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Reg {
-    r1: String,
-    r2: String,
+    pub r1: String,
+    pub r2: String,
 }
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct DisAssembledToken {
-    locctr: u32,
-    command: Command,
-    flags: Option<AddressFlags>,
-    address: Option<u32>,
-    reg: Option<Reg>,
+    pub locctr: u32,
+    pub command: Command,
+    pub flags: Option<AddressFlags>,
+    pub address: Option<u32>,
+    pub reg: Option<Reg>,
 }

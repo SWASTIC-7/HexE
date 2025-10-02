@@ -39,8 +39,6 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
                 parsed_obj_prog.push(parsed_obj);
             }
             'T' => {
-                //TODO: complete the implementation
-
                 let start_addr_hex = &record[0..6];
                 let length_hex = &record[6..8];
                 let obj_code = &record[8..];

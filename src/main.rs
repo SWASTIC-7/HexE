@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::{self, Read};
 
 mod assembler;
+mod disassembler;
 mod loader;
 mod predefined;
 mod simulator;
@@ -16,7 +17,8 @@ fn main() -> io::Result<()> {
     file.read_to_string(&mut buffer)?;
     // lexer::tokenize(&buffer);
     // pass2asm::pass2asm(&buffer);
-    loader::loader::loader(buffer);
+    // loader::loader::loader(buffer);
+    simulator::sim::simulator(buffer);
     // println!("{buffer}");
     Ok(())
 }

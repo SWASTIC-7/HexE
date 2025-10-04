@@ -1,8 +1,9 @@
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::predefined::common::{ObjectRecord, OBJECTPROGRAM};
-    use std::sync::Mutex;
+
+use hex_e::predefined::common::{ObjectRecord, OBJECTPROGRAM, AddressFlags, Command, DisAssembledToken};
+use hex_e::simulator::sim::{Simulator, simulator};
+use hex_e::simulator::opcode_implementation::{Opcode, AddressingMode};
+
 
     // Helper function to create a test object program
     fn create_test_object_program() -> String {
@@ -272,7 +273,7 @@ mod tests {
         // Test Format 1 instruction
         let format1_instr = DisAssembledToken {
             locctr: 0x001000,
-            command: Command::Instruction(crate::predefined::common::Instruction {
+            command: Command::Instruction(predefined::common::Instruction {
                 instr: "RSUB".to_string(),
                 opcode: crate::predefined::opcode::OpCode {
                     code: 0x4C,
@@ -461,7 +462,7 @@ mod tests {
         // PC should still advance
         assert_eq!(sim.machine.reg_pc, 1);
     }
-}
+
 
 // Benchmark tests (optional, requires nightly Rust)
 #[cfg(test)]

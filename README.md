@@ -16,4 +16,5 @@
 - [ ] supports all the sic/xe directive
 - [ ] supports literals
 - [ ] supports base 
-- [ ] supports all the features
+- [ ] provides tui simulator
+- [ ] debugger

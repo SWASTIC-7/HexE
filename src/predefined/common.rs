@@ -38,7 +38,7 @@ pub enum Command {
     Directive(String),
     Instruction(Instruction),
 }
-
+#[allow(dead_code)]
 impl Command {
     pub fn is_instruction(&self) -> bool {
         matches!(self, Command::Instruction(_))

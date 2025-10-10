@@ -28,7 +28,7 @@ mod simulator_tests {
                 p: false,
                 e: false,
             }),
-            address: Some(0x1000),
+            address: Some(1000),
             reg: None,
         };
 

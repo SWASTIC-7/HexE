@@ -23,7 +23,7 @@ use assembler::pass2asm;
 //    ↓
 // Memory Image
 //    ↓
-// Simulator (Execution)
+// Simulator (Disassemble + tui + Execution)
 
 // when object program is passed
 // Object Program (.obj)
@@ -32,7 +32,7 @@ use assembler::pass2asm;
 //    ↓
 // Memory Image
 //    ↓
-// Simulator (Execution)
+// Simulator (Disassemble + tui +  Execution)
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();

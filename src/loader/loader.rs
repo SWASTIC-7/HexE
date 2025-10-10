@@ -34,7 +34,7 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
                 let parsed_obj = ObjectRecord::Header {
                     name: program_name.trim().to_string(),
                     start: start_addr,
-                    length: length,
+                    length,
                 };
                 parsed_obj_prog.push(parsed_obj);
             }

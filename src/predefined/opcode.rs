@@ -728,6 +728,7 @@ pub fn build_optab() -> HashMap<&'static str, OpCode> {
 }
 
 #[allow(dead_code)]
+#[allow(clippy::upper_case_acronyms)]
 pub fn reverse_optab() -> HashMap<u8, (&'static str, u8)> {
     let mut reverse = HashMap::new();
 

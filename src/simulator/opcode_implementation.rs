@@ -1,6 +1,7 @@
 use super::inistialize_machine::Machine;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum Opcode {
     // ---- Data Movement ----
     LDA,
@@ -81,6 +82,7 @@ pub enum AddressingMode {
     Indexed,
 }
 
+#[warn(unused_variables)]
 impl Opcode {
     pub fn execute(&self, machine: &mut Machine, operand: u32, mode: AddressingMode) {
         match self {
@@ -587,7 +589,7 @@ impl Opcode {
         machine.reg_sw = value;
     }
 
-    fn supervisor_call(&self, machine: &mut Machine, operand: u32) {
+    fn supervisor_call(&self, _machine: &mut Machine, operand: u32) {
         // Supervisor call - implementation specific
         let _call_code = operand;
         println!("Supervisor call: {}", operand);

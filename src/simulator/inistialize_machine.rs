@@ -15,7 +15,7 @@ pub struct Machine {
     pub memory: Vec<u8>,
 
     // Control
-    pub running: bool,
+    // pub running: bool,
     pub cc: i8, // Condition code (-1, 0, 1)
 }
 
@@ -32,7 +32,7 @@ impl Machine {
             reg_pc: 0,
             reg_sw: 0,
             memory: vec![0; 1048576], // 1MB
-            running: false,
+            // running: false,
             cc: 0,
         }
     }

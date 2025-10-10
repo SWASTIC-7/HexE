@@ -7,6 +7,14 @@ use crate::predefined::common::{
 };
 use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
+use crate::tui::tui::Tui;
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    execute,
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+};
+use ratatui::{Terminal, backend::CrosstermBackend};
+use std::io;
 
 pub struct Simulator {
     pub machine: Machine,
@@ -370,4 +378,86 @@ pub fn simulator(buffer: String) {
 
     println!("Simulation completed.");
     sim.print_state();
+}
+
+pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
+    // Setup terminal
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    // Create app state
+    let mut tui = Tui::new();
+    let mut sim = Simulator::new();
+
+    // Main event loop
+    loop {
+        // Draw UI
+        terminal.draw(|f| tui.draw(f))?;
+
+        // Update TUI with simulator state
+        tui.update_registers(
+            sim.machine.reg_a,
+            sim.machine.reg_x,
+            sim.machine.reg_l,
+            sim.machine.reg_pc,
+            sim.machine.reg_sw,
+        );
+
+        let mem_slice = &sim.machine.memory[0..256]; // Show first 256 bytes
+        tui.update_memory(0, mem_slice);
+
+        // Convert instructions to the format expected by TUI
+        let disassembly: Vec<(u32, String, String)> = sim
+            .instructions
+            .iter()
+            .map(|instr| {
+                (
+                    instr.locctr,
+                    sim.format_instruction(instr),
+                    String::new(), // Add any additional info here if needed
+                )
+            })
+            .collect();
+        tui.update_disassembly(disassembly);
+
+        // Handle events
+        if event::poll(std::time::Duration::from_millis(100))? {
+            if let Event::Key(key) = event::read()? {
+                match key.code {
+                    KeyCode::Char('q') => break,
+                    KeyCode::Char('s') => {
+                        sim.step();
+                    }
+                    KeyCode::Char('r') => {
+                        sim.run();
+                    }
+                    KeyCode::Char('b') => {
+                        sim.add_breakpoint(sim.machine.reg_pc);
+                    }
+                    KeyCode::Char('l') => {
+                        // Example: Load a program
+                        // You might want to implement proper file loading here
+                        if let Ok(buffer) = std::fs::read_to_string("program.obj") {
+                            sim.load_program(buffer);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    // Cleanup terminal
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
+    terminal.show_cursor()?;
+
+    Ok(())
 }

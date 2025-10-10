@@ -7,7 +7,7 @@ use hex;
 
 pub fn disassemble() -> Vec<DisAssembledToken> {
     let mut starting_addr = 0u32;
-    let mut locctr: u32 = 0;
+    let mut locctr: u32;
     let mut parsed_dissassembled_code: Vec<DisAssembledToken> = Vec::new();
 
     for lines in OBJECTPROGRAM.lock().unwrap().iter() {
@@ -19,7 +19,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
             } => {
                 let _file_name = name;
                 starting_addr = *start;
-                locctr = starting_addr;
+                // locctr = starting_addr;
                 let _prog_length = *length;
             }
             ObjectRecord::Text {
@@ -50,7 +50,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                             };
 
                             let code_line = DisAssembledToken {
-                                locctr: locctr,
+                                locctr,
                                 command: Command::Instruction(instr),
                                 flags: None,
                                 address: None,
@@ -92,7 +92,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                 .unwrap_or_else(|| format!("R{}", r2));
 
                             let code_line = DisAssembledToken {
-                                locctr: locctr,
+                                locctr,
                                 command: Command::Instruction(instr),
                                 flags: None,
                                 address: None,
@@ -133,7 +133,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                             let displacement = ((bytes[1] & 0x0F) as u16) << 8 | bytes[2] as u16;
 
                             let code_line = DisAssembledToken {
-                                locctr: locctr,
+                                locctr,
                                 command: Command::Instruction(instr),
                                 flags: Some(flags),
                                 address: Some(displacement as u32),
@@ -173,7 +173,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                 | (bytes[3] as u32);
 
                             let code_line = DisAssembledToken {
-                                locctr: locctr,
+                                locctr,
                                 command: Command::Instruction(instr),
                                 flags: Some(flags),
                                 address: Some(displacement),

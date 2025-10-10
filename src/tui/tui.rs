@@ -1,8 +1,6 @@
 pub use super::disassembly;
-pub use super::list;
 pub use super::memory;
 pub use super::registers;
-pub use super::table;
 // mod registers;
 // mod disassembly;
 // mod memory;

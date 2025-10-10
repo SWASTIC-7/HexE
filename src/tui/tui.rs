@@ -1,9 +1,6 @@
 pub use super::disassembly;
 pub use super::memory;
 pub use super::registers;
-// mod registers;
-// mod disassembly;
-// mod memory;
 
 use ratatui::{
     Frame,

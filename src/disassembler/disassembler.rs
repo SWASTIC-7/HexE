@@ -1,7 +1,7 @@
 use crate::predefined::common::{
-    AddressFlags, Command, DisAssembledToken, Instruction, OBJECTPROGRAM, ObjectRecord, Reg,
+    AddressFlags, Command, DisAssembledToken, Instruction, OBJECTPROGRAM, ObjectRecord, OpCode, Reg,
 };
-use crate::predefined::opcode::{OpCode, reverse_optab};
+use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
 use hex;
 

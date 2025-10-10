@@ -1,5 +1,6 @@
 use super::inistialize_machine::Machine;
 use super::opcode_implementation::{AddressingMode, Opcode};
+use super::{name_to_opcode, register_name_to_code};
 use crate::disassembler::disassembler;
 use crate::loader::loader;
 use crate::predefined::common::{
@@ -35,8 +36,8 @@ impl Simulator {
         }
     }
 
-    pub fn load_program(&mut self, buffer: String) {
-        loader::loader(buffer);
+    pub fn load_program(&mut self) {
+        // loader::loader(buffer);
         self.find_program_start();
 
         self.machine.reg_pc = self.program_start;
@@ -99,7 +100,7 @@ impl Simulator {
         self.instructions.iter().find(|instr| instr.locctr == pc)
     }
 
-    fn execute_instruction(&mut self, token: &DisAssembledToken) {
+    pub fn execute_instruction(&mut self, token: &DisAssembledToken) {
         match &token.command {
             Command::Instruction(instr) => {
                 let opcode_byte = instr.opcode.code;
@@ -150,80 +151,17 @@ impl Simulator {
     fn byte_to_opcode(&self, byte: u8) -> Option<Opcode> {
         let reverse_table = reverse_optab();
         if let Some((name, _)) = reverse_table.get(&byte) {
-            self.name_to_opcode(name)
+            self::name_to_opcode(name)
         } else {
             None
-        }
-    }
-
-    fn name_to_opcode(&self, name: &str) -> Option<Opcode> {
-        match name {
-            "LDA" => Some(Opcode::LDA),
-            "LDX" => Some(Opcode::LDX),
-            "LDL" => Some(Opcode::LDL),
-            "LDB" => Some(Opcode::LDB),
-            "LDS" => Some(Opcode::LDS),
-            "LDT" => Some(Opcode::LDT),
-            "LDF" => Some(Opcode::LDF),
-            "LDCH" => Some(Opcode::LDCH),
-            "STA" => Some(Opcode::STA),
-            "STX" => Some(Opcode::STX),
-            "STL" => Some(Opcode::STL),
-            "STB" => Some(Opcode::STB),
-            "STS" => Some(Opcode::STS),
-            "STT" => Some(Opcode::STT),
-            "STF" => Some(Opcode::STF),
-            "STI" => Some(Opcode::STI),
-            "STCH" => Some(Opcode::STCH),
-            "STSW" => Some(Opcode::STSW),
-            "ADD" => Some(Opcode::ADD),
-            "ADDF" => Some(Opcode::ADDF),
-            "SUB" => Some(Opcode::SUB),
-            "SUBF" => Some(Opcode::SUBF),
-            "MUL" => Some(Opcode::MUL),
-            "MULF" => Some(Opcode::MULF),
-            "DIV" => Some(Opcode::DIV),
-            "DIVF" => Some(Opcode::DIVF),
-            "COMP" => Some(Opcode::COMP),
-            "COMPF" => Some(Opcode::COMPF),
-            "COMPR" => Some(Opcode::COMPR),
-            "ADDR" => Some(Opcode::ADDR),
-            "SUBR" => Some(Opcode::SUBR),
-            "MULR" => Some(Opcode::MULR),
-            "DIVR" => Some(Opcode::DIVR),
-            "RMO" => Some(Opcode::RMO),
-            "CLEAR" => Some(Opcode::CLEAR),
-            "TIXR" => Some(Opcode::TIXR),
-            "SHIFTL" => Some(Opcode::SHIFTL),
-            "SHIFTR" => Some(Opcode::SHIFTR),
-            "J" => Some(Opcode::J),
-            "JEQ" => Some(Opcode::JEQ),
-            "JGT" => Some(Opcode::JGT),
-            "JLT" => Some(Opcode::JLT),
-            "JSUB" => Some(Opcode::JSUB),
-            "RSUB" => Some(Opcode::RSUB),
-            "TIX" => Some(Opcode::TIX),
-            "RD" => Some(Opcode::RD),
-            "WD" => Some(Opcode::WD),
-            "TD" => Some(Opcode::TD),
-            "SIO" => Some(Opcode::SIO),
-            "TIO" => Some(Opcode::TIO),
-            "HIO" => Some(Opcode::HIO),
-            "FIX" => Some(Opcode::FIX),
-            "FLOAT" => Some(Opcode::FLOAT),
-            "NORM" => Some(Opcode::NORM),
-            "SSK" => Some(Opcode::SSK),
-            "LPS" => Some(Opcode::LPS),
-            "SVC" => Some(Opcode::SVC),
-            _ => None,
         }
     }
 
     fn get_format2_operand(&self, token: &DisAssembledToken) -> u32 {
         if let Some(reg) = &token.reg {
             let register_map = reverse_register_map();
-            let r1 = self.register_name_to_code(&reg.r1).unwrap_or(0);
-            let r2 = self.register_name_to_code(&reg.r2).unwrap_or(0);
+            let r1 = self::register_name_to_code(&reg.r1).unwrap_or(0);
+            let r2 = self::register_name_to_code(&reg.r2).unwrap_or(0);
             ((r1 as u32) << 4) | (r2 as u32)
         } else {
             0
@@ -271,21 +209,6 @@ impl Simulator {
             AddressingMode::Indexed
         } else {
             AddressingMode::Direct
-        }
-    }
-
-    fn register_name_to_code(&self, name: &str) -> Option<u8> {
-        match name {
-            "A" => Some(0),
-            "X" => Some(1),
-            "L" => Some(2),
-            "B" => Some(3),
-            "S" => Some(4),
-            "T" => Some(5),
-            "F" => Some(6),
-            "PC" => Some(8),
-            "SW" => Some(9),
-            _ => None,
         }
     }
 
@@ -368,7 +291,7 @@ impl Simulator {
 // Main simulator function for compatibility
 pub fn simulator(buffer: String) {
     let mut sim = Simulator::new();
-    sim.load_program(buffer);
+    sim.load_program();
 
     println!("Starting simulation...");
     sim.print_state();
@@ -441,7 +364,7 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                         // Example: Load a program
                         // You might want to implement proper file loading here
                         if let Ok(buffer) = std::fs::read_to_string("program.obj") {
-                            sim.load_program(buffer);
+                            sim.load_program();
                         }
                     }
                     _ => {}

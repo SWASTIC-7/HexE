@@ -1,4 +1,4 @@
-use super::opcode::OpCode;
+// use super::opcode::OpCode;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 pub static OBJECTPROGRAM: Lazy<Mutex<Vec<ObjectRecord>>> = Lazy::new(|| Mutex::new(vec![]));
@@ -37,6 +37,19 @@ pub struct Instruction {
 pub enum Command {
     Directive(String),
     Instruction(Instruction),
+}
+
+impl Command {
+    pub fn is_instruction(&self) -> bool {
+        matches!(self, Command::Instruction(_))
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+#[allow(dead_code)]
+pub struct OpCode {
+    pub code: u8,   // opcode value
+    pub format: u8, // instruction format (1, 2, 3/4)
 }
 
 #[derive(Debug, Clone)]

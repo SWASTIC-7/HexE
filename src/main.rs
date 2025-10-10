@@ -12,6 +12,28 @@ mod tui;
 
 use assembler::pass2asm;
 
+//when Assembly file is given
+// Assembly Program (.asm)
+//    ↓
+// Assembler (Pass 1 + Pass 2)
+//    ↓
+// Object Program (.obj)
+//    ↓
+// Loader
+//    ↓
+// Memory Image
+//    ↓
+// Simulator (Execution)
+
+// when object program is passed
+// Object Program (.obj)
+//    ↓
+// Loader
+//    ↓
+// Memory Image
+//    ↓
+// Simulator (Execution)
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
@@ -45,7 +67,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // loader::loader::loader(buffer);
     // simulator::sim::simulator(buffer);
     let mut sim = simulator::sim::Simulator::new();
-    sim.load_program(buffer);
+    sim.load_program();
     // sim.add_breakpoint(0x1000);
     sim.step();
 

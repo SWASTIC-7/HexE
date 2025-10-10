@@ -30,8 +30,9 @@ impl MemoryWidget {
             rows.push(ratatui::widgets::Row::new(vec![addr, hex]));
         }
 
-        let memory_table = Table::new(rows)
-            .widths(&[Constraint::Length(10), Constraint::Length(50)])
+        let widths = vec![Constraint::Length(10), Constraint::Length(50)];
+
+        let memory_table = Table::new(rows, widths)
             .block(Block::default().title("Memory").borders(Borders::ALL))
             .style(Style::default().fg(Color::White));
 

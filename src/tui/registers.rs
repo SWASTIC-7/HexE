@@ -33,10 +33,9 @@ impl RegistersWidget {
             Row::new(vec!["SW".to_string(), format!("{:06X}", self.sw)]),
         ];
 
-        let widths = [Constraint::Length(4), Constraint::Length(8)];
+        let widths = vec![Constraint::Length(4), Constraint::Length(8)];
 
-        let register_table = Table::new(rows)
-            .widths(&[Constraint::Length(4), Constraint::Length(8)])
+        let register_table = Table::new(rows, widths)
             .block(
                 Block::default()
                     .title("CPU Registers")

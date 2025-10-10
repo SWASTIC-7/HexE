@@ -1,3 +1,83 @@
 pub mod inistialize_machine;
 pub mod opcode_implementation;
 pub mod sim;
+
+use opcode_implementation::Opcode;
+
+pub fn name_to_opcode(name: &str) -> Option<Opcode> {
+    match name {
+        "LDA" => Some(Opcode::LDA),
+        "LDX" => Some(Opcode::LDX),
+        "LDL" => Some(Opcode::LDL),
+        "LDB" => Some(Opcode::LDB),
+        "LDS" => Some(Opcode::LDS),
+        "LDT" => Some(Opcode::LDT),
+        "LDF" => Some(Opcode::LDF),
+        "LDCH" => Some(Opcode::LDCH),
+        "STA" => Some(Opcode::STA),
+        "STX" => Some(Opcode::STX),
+        "STL" => Some(Opcode::STL),
+        "STB" => Some(Opcode::STB),
+        "STS" => Some(Opcode::STS),
+        "STT" => Some(Opcode::STT),
+        "STF" => Some(Opcode::STF),
+        "STI" => Some(Opcode::STI),
+        "STCH" => Some(Opcode::STCH),
+        "STSW" => Some(Opcode::STSW),
+        "ADD" => Some(Opcode::ADD),
+        "ADDF" => Some(Opcode::ADDF),
+        "SUB" => Some(Opcode::SUB),
+        "SUBF" => Some(Opcode::SUBF),
+        "MUL" => Some(Opcode::MUL),
+        "MULF" => Some(Opcode::MULF),
+        "DIV" => Some(Opcode::DIV),
+        "DIVF" => Some(Opcode::DIVF),
+        "COMP" => Some(Opcode::COMP),
+        "COMPF" => Some(Opcode::COMPF),
+        "COMPR" => Some(Opcode::COMPR),
+        "ADDR" => Some(Opcode::ADDR),
+        "SUBR" => Some(Opcode::SUBR),
+        "MULR" => Some(Opcode::MULR),
+        "DIVR" => Some(Opcode::DIVR),
+        "RMO" => Some(Opcode::RMO),
+        "CLEAR" => Some(Opcode::CLEAR),
+        "TIXR" => Some(Opcode::TIXR),
+        "SHIFTL" => Some(Opcode::SHIFTL),
+        "SHIFTR" => Some(Opcode::SHIFTR),
+        "J" => Some(Opcode::J),
+        "JEQ" => Some(Opcode::JEQ),
+        "JGT" => Some(Opcode::JGT),
+        "JLT" => Some(Opcode::JLT),
+        "JSUB" => Some(Opcode::JSUB),
+        "RSUB" => Some(Opcode::RSUB),
+        "TIX" => Some(Opcode::TIX),
+        "RD" => Some(Opcode::RD),
+        "WD" => Some(Opcode::WD),
+        "TD" => Some(Opcode::TD),
+        "SIO" => Some(Opcode::SIO),
+        "TIO" => Some(Opcode::TIO),
+        "HIO" => Some(Opcode::HIO),
+        "FIX" => Some(Opcode::FIX),
+        "FLOAT" => Some(Opcode::FLOAT),
+        "NORM" => Some(Opcode::NORM),
+        "SSK" => Some(Opcode::SSK),
+        "LPS" => Some(Opcode::LPS),
+        "SVC" => Some(Opcode::SVC),
+        _ => None,
+    }
+}
+
+pub fn register_name_to_code(name: &str) -> Option<u8> {
+    match name {
+        "A" => Some(0),
+        "X" => Some(1),
+        "L" => Some(2),
+        "B" => Some(3),
+        "S" => Some(4),
+        "T" => Some(5),
+        "F" => Some(6),
+        "PC" => Some(8),
+        "SW" => Some(9),
+        _ => None,
+    }
+}

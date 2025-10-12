@@ -1,10 +1,10 @@
 use super::parser::parser;
-use crate::predefined::common::{Command, LabeledParsedLines, SymbolTable};
+use crate::predefined::common::{Command, LabeledParsedLines, SYMBOLTABLE, SymbolTable};
 
 pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolTable>) {
     let parsed_lines = parser(buffer);
     println!("Parsed {} lines", parsed_lines.len()); // Debug: check if parser returns data
-    let mut symbol_table: Vec<SymbolTable> = Vec::new();
+    let mut symbol_table = SYMBOLTABLE.lock().unwrap();
     let mut labeledparsedline: Vec<LabeledParsedLines> = Vec::new();
     let mut locctr: u32 = 0x9999999;
     let mut length = 0;
@@ -171,9 +171,9 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
         }
     }
 
-    for items in &symbol_table {
+    for items in symbol_table.to_vec() {
         println!("{items:x?}");
     }
     // println!("{length}");
-    (labeledparsedline, length, startaddr, symbol_table)
+    (labeledparsedline, length, startaddr, symbol_table.to_vec())
 }

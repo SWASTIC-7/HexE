@@ -3,7 +3,7 @@ use super::opcode_implementation::{AddressingMode, Opcode};
 use super::{name_to_opcode, register_name_to_code};
 use crate::disassembler::disassembler;
 use crate::predefined::common::{
-    AddressFlags, Command, DisAssembledToken, OBJECTPROGRAM, ObjectRecord,
+    AddressFlags, Command, DisAssembledToken, OBJECTPROGRAM, ObjectRecord, SYMBOLTABLE,
 };
 use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
@@ -324,6 +324,19 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
     // Load program first to initialize simulator state
     sim.load_program();
 
+    // Load object program and symbol table from global state
+    let object_program = {
+        let obj_prog = OBJECTPROGRAM.lock().unwrap();
+        obj_prog.clone()
+    };
+    tui.update_object_program(object_program);
+
+    // Get symbol table from pass1asm if available
+    // You might need to store this in a global like OBJECTPROGRAM
+    // For now, we'll create an empty one - you can populate it from your assembler
+    let symbol_table = SYMBOLTABLE.lock().unwrap().clone();
+    tui.update_symbol_table(symbol_table);
+
     // Main event loop
     loop {
         // Update TUI with current simulator state before drawing
@@ -372,6 +385,12 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                     KeyCode::Right => {
                         tui.move_focus_right();
                     }
+                    KeyCode::Tab => {
+                        tui.next_tab();
+                    }
+                    KeyCode::BackTab => {
+                        tui.previous_tab();
+                    }
                     KeyCode::Enter => {
                         match tui.get_focused_button() {
                             0 => {
@@ -404,6 +423,13 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                             use crate::loader::loader::loader;
                             loader(buffer);
                             sim.load_program();
+
+                            // Update object program in TUI
+                            let object_program = {
+                                let obj_prog = OBJECTPROGRAM.lock().unwrap();
+                                obj_prog.clone()
+                            };
+                            tui.update_object_program(object_program);
                         }
                     }
                     _ => {}

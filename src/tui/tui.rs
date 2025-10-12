@@ -1,7 +1,9 @@
 pub use super::disassembly;
 pub use super::memory;
 pub use super::registers;
+pub use super::tabs;
 
+use crate::predefined::common::{ObjectRecord, SymbolTable};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
@@ -14,6 +16,7 @@ pub struct Tui {
     registers: registers::RegistersWidget,
     disassembly: disassembly::DisassemblyWidget,
     memory: memory::MemoryWidget,
+    tabs: tabs::TabsWidget,
     buttons: Vec<&'static str>,
     focused_button: usize,
 }
@@ -24,6 +27,7 @@ impl Tui {
             registers: registers::RegistersWidget::new(),
             disassembly: disassembly::DisassemblyWidget::new(),
             memory: memory::MemoryWidget::new(65536), // 64K memory
+            tabs: tabs::TabsWidget::new(),
             buttons: vec!["Step", "Run", "Reset"],
             focused_button: 0,
         }
@@ -53,6 +57,7 @@ impl Tui {
         self.registers.render(f, left_layout[0]);
         self.render_controls(f, left_layout[1]);
         self.disassembly.render(f, left_layout[2]);
+        self.tabs.render(f, right_layout[0]);
         self.memory.render(f, right_layout[1]);
     }
 
@@ -103,6 +108,14 @@ impl Tui {
         self.disassembly.instructions = instructions;
     }
 
+    pub fn update_object_program(&mut self, object_program: Vec<ObjectRecord>) {
+        self.tabs.object_program = object_program;
+    }
+
+    pub fn update_symbol_table(&mut self, symbol_table: Vec<SymbolTable>) {
+        self.tabs.symbol_table = symbol_table;
+    }
+
     pub fn move_focus_left(&mut self) {
         if self.focused_button > 0 {
             self.focused_button -= 1;
@@ -113,6 +126,14 @@ impl Tui {
         if self.focused_button + 1 < self.buttons.len() {
             self.focused_button += 1;
         }
+    }
+
+    pub fn next_tab(&mut self) {
+        self.tabs.next_tab();
+    }
+
+    pub fn previous_tab(&mut self) {
+        self.tabs.previous_tab();
     }
 
     pub fn get_focused_button(&self) -> usize {

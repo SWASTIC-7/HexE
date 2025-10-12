@@ -2,6 +2,7 @@
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 pub static OBJECTPROGRAM: Lazy<Mutex<Vec<ObjectRecord>>> = Lazy::new(|| Mutex::new(vec![]));
+pub static SYMBOLTABLE: Lazy<Mutex<Vec<SymbolTable>>> = Lazy::new(|| Mutex::new(vec![]));
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]

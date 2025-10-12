@@ -32,6 +32,37 @@ note file must be .asm extenstion
 
  note file must have .txt extenstion
 
+## TUI Simulator Controls
+
+The TUI (Terminal User Interface) provides an interactive debugging environment for your SIC/XE programs.
+
+### Keyboard Shortcuts
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| **q** | Quit | Exit the TUI simulator |
+| **s** | Step | Execute a single instruction (step-by-step execution) |
+| **r** | Run | Run the program until completion or breakpoint |
+| **b** | Breakpoint | Add a breakpoint at the current PC address |
+| **Tab** | Switch Tabs | Cycle between Object Program and Symbol Table tabs |
+| **Shift+Tab** | Previous Tab | Go to the previous tab |
+| **↑** | Scroll Up | Scroll memory dump upward |
+| **↓** | Scroll Down | Scroll memory dump downward |
+| **←** | Focus Left | Move focus to the previous control button |
+| **→** | Focus Right | Move focus to the next control button |
+| **Enter** | Activate | Execute the currently focused button (Step/Run/Reset) |
+
+
+### UI Components
+
+1. **CPU Registers** (Top-Left): Displays current values of A, X, L, PC, and SW registers
+2. **Control Buttons** (Below Registers): Interactive buttons for Step/Run/Reset
+3. **Disassembly** (Left Panel): Shows disassembled instructions with current PC marked by `>`
+4. **Object Code/Symbol Table** (Top-Right): Tabbed view showing object program or symbol table
+5. **Memory Dump** (Bottom-Right): Hexadecimal memory dump with scrolling support
+6. **Reference Bar** (Bottom): Quick reference for keyboard shortcuts
+
+
  ## Project Status
 - [x] Basic instruction parsing
 - [x] Pass 1 assembler

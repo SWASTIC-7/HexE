@@ -27,18 +27,18 @@ impl RegistersWidget {
     pub fn render(&self, f: &mut Frame, area: ratatui::layout::Rect) {
         let rows = vec![
             Row::new(vec!["A".to_string(), format!("{:06X}", self.a)])
-                .style(Style::default().fg(Color::Cyan)),
+                .style(Style::default().fg(Color::Rgb(200, 200, 200))),
             Row::new(vec!["X".to_string(), format!("{:06X}", self.x)])
-                .style(Style::default().fg(Color::Cyan)),
+                .style(Style::default().fg(Color::Rgb(200, 200, 200))),
             Row::new(vec!["L".to_string(), format!("{:06X}", self.l)])
-                .style(Style::default().fg(Color::Cyan)),
+                .style(Style::default().fg(Color::Rgb(200, 200, 200))),
             Row::new(vec!["PC".to_string(), format!("{:06X}", self.pc)]).style(
                 Style::default()
-                    .fg(Color::Green)
+                    .fg(Color::Rgb(100, 255, 100))
                     .add_modifier(Modifier::BOLD),
             ),
             Row::new(vec!["SW".to_string(), format!("{:06X}", self.sw)])
-                .style(Style::default().fg(Color::Cyan)),
+                .style(Style::default().fg(Color::Rgb(200, 200, 200))),
         ];
 
         let widths = vec![Constraint::Length(4), Constraint::Length(8)];
@@ -47,10 +47,13 @@ impl RegistersWidget {
             .block(
                 Block::default()
                     .title("CPU Registers")
-                    .borders(Borders::ALL),
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Cyan)),
             )
-            .header(Row::new(vec!["Reg", "Value"]).style(Style::default().fg(Color::Yellow)))
-            .style(Style::default().fg(Color::White));
+            .header(
+                Row::new(vec!["Reg", "Value"]).style(Style::default().fg(Color::Rgb(255, 200, 0))),
+            )
+            .style(Style::default().fg(Color::Cyan));
 
         f.render_widget(register_table, area);
     }

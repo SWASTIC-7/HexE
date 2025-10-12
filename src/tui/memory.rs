@@ -2,7 +2,7 @@ use crate::predefined::common::{OBJECTPROGRAM, ObjectRecord};
 use ratatui::{
     Frame,
     style::{Color, Style},
-    text::Line,
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState},
 };
 
@@ -84,8 +84,8 @@ impl MemoryWidget {
         let end_addr_aligned = end_addr & !0xF; // Align to 16
 
         for addr in (0..=end_addr_aligned).step_by(16) {
-            let line_str = self.format_memory_line(addr, &memory_bytes);
-            lines.push(Line::from(line_str));
+            let line = self.format_memory_line_colored(addr, &memory_bytes);
+            lines.push(line);
         }
 
         // Apply scroll offset
@@ -99,9 +99,10 @@ impl MemoryWidget {
             .block(
                 Block::default()
                     .title("Memory Dump (↑↓ to scroll)")
-                    .borders(Borders::ALL),
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Cyan)),
             )
-            .style(Style::default().fg(Color::Cyan));
+            .style(Style::default().fg(Color::Rgb(200, 200, 200)));
 
         f.render_widget(paragraph, area);
 
@@ -128,6 +129,39 @@ impl MemoryWidget {
         );
     }
 
+    fn format_memory_line_colored(&self, addr: u32, memory: &[u8]) -> Line {
+        let mut spans = Vec::new();
+
+        // Address in golden yellow
+        spans.push(Span::styled(
+            format!("{:07x}", addr),
+            Style::default().fg(Color::Rgb(255, 200, 0)),
+        ));
+
+        // Memory bytes in light gray
+        let mut bytes_str = String::new();
+        for i in 0..16 {
+            if i % 2 == 0 {
+                bytes_str.push(' ');
+            }
+
+            let byte_addr = (addr + i) as usize;
+            if byte_addr < memory.len() {
+                bytes_str.push_str(&format!("{:02x}", memory[byte_addr]));
+            } else {
+                bytes_str.push_str("00");
+            }
+        }
+
+        spans.push(Span::styled(
+            bytes_str,
+            Style::default().fg(Color::Rgb(200, 200, 200)),
+        ));
+
+        Line::from(spans)
+    }
+
+    // Keep the old method for compatibility if needed elsewhere
     fn format_memory_line(&self, addr: u32, memory: &[u8]) -> String {
         let mut result = format!("{:07x}", addr);
 

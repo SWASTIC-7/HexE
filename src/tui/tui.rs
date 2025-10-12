@@ -34,6 +34,12 @@ impl Tui {
     }
 
     pub fn draw(&self, f: &mut Frame) {
+        // Set background color
+        f.render_widget(
+            Block::default().style(Style::default().bg(Color::Rgb(25, 25, 35))),
+            f.area(),
+        );
+
         let main_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
@@ -75,14 +81,20 @@ impl Tui {
             let style = if i == self.focused_button {
                 Style::default()
                     .fg(Color::Black)
-                    .bg(Color::Yellow)
+                    .bg(Color::Rgb(255, 200, 0))
                     .add_modifier(Modifier::BOLD)
             } else {
-                Style::default().fg(Color::White).bg(Color::DarkGray)
+                Style::default()
+                    .fg(Color::Rgb(200, 200, 200))
+                    .bg(Color::Rgb(50, 50, 60))
             };
 
             let button = Paragraph::new(Span::styled(button_text, style))
-                .block(Block::default().borders(Borders::ALL))
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_style(Style::default().fg(Color::Cyan)),
+                )
                 .alignment(ratatui::layout::Alignment::Center);
 
             f.render_widget(button, button_layout[i]);

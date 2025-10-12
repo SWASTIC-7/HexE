@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem, Tabs},
+    widgets::{Block, Borders, List, ListItem, Row, Table, Tabs},
 };
 
 pub struct TabsWidget {
@@ -39,12 +39,17 @@ impl TabsWidget {
         // Render tabs
         let titles = vec!["Object Program", "Symbol Table"];
         let tabs = Tabs::new(titles)
-            .block(Block::default().borders(Borders::ALL).title("Tables"))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Tables")
+                    .border_style(Style::default().fg(Color::Cyan)),
+            )
             .select(self.selected_tab)
-            .style(Style::default().fg(Color::White))
+            .style(Style::default().fg(Color::Rgb(200, 200, 200)))
             .highlight_style(
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(Color::Rgb(255, 200, 0))
                     .add_modifier(Modifier::BOLD),
             );
         f.render_widget(tabs, chunks[0]);
@@ -93,41 +98,86 @@ impl TabsWidget {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title("Object Program Records"),
+                    .title("Object Program Records")
+                    .border_style(Color::Cyan),
             )
-            .style(Style::default().fg(Color::Cyan));
+            .style(Style::default().fg(Color::White));
 
         f.render_widget(list, area);
     }
 
-    fn render_symbol_table(&self, f: &mut Frame, area: ratatui::layout::Rect) {
-        let mut items: Vec<ListItem> = vec![ListItem::new(Line::from(vec![
-            Span::styled(
-                "Label",
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD),
-            ),
-            Span::raw("          "),
-            Span::styled(
-                "Address",
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD),
-            ),
-        ]))];
+    fn render_object_code_hexdump(&self, f: &mut Frame, area: ratatui::layout::Rect) {
+        let mut rows: Vec<Row> = Vec::new();
 
-        for symbol in &self.symbol_table {
-            items.push(ListItem::new(format!(
-                "{:<15} {:06X}",
-                symbol.label, symbol.address
-            )));
+        // Add header row
+        rows.push(
+            Row::new(vec!["Address", "Object Code"]).style(
+                Style::default()
+                    .fg(Color::Rgb(255, 200, 0))
+                    .add_modifier(Modifier::BOLD),
+            ),
+        );
+
+        for record in &self.object_program {
+            match record {
+                ObjectRecord::Text {
+                    start, objcodes, ..
+                } => {
+                    let addr_str = format!("{:06X}", start);
+                    let code_str = objcodes.join(" ");
+
+                    rows.push(
+                        Row::new(vec![addr_str, code_str])
+                            .style(Style::default().fg(Color::Rgb(200, 200, 200))),
+                    );
+                }
+                _ => {}
+            }
         }
 
-        let list = List::new(items)
-            .block(Block::default().borders(Borders::ALL).title("Symbol Table"))
-            .style(Style::default().fg(Color::Green));
+        let widths = &[Constraint::Length(10), Constraint::Length(30)];
 
-        f.render_widget(list, area);
+        let table = Table::new(rows, widths)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Object Code Dump")
+                    .border_style(Style::default().fg(Color::Cyan)),
+            )
+            .style(Style::default().fg(Color::White));
+
+        f.render_widget(table, area);
+    }
+
+    fn render_symbol_table(&self, f: &mut Frame, area: ratatui::layout::Rect) {
+        let mut rows: Vec<Row> = Vec::new();
+
+        // Add header row
+        rows.push(
+            Row::new(vec!["Label", "Address"]).style(Style::default().fg(Color::Rgb(255, 200, 0))),
+        );
+
+        for symbol in &self.symbol_table {
+            rows.push(
+                Row::new(vec![
+                    symbol.label.clone(),
+                    format!("{:06X}", symbol.address),
+                ])
+                .style(Style::default().fg(Color::White)),
+            );
+        }
+
+        let widths = &[Constraint::Length(15), Constraint::Length(10)];
+
+        let table = Table::new(rows, widths)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Symbol Table")
+                    .border_style(Style::default().fg(Color::Cyan)),
+            )
+            .style(Style::default().fg(Color::White));
+
+        f.render_widget(table, area);
     }
 }

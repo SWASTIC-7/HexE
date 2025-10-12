@@ -24,17 +24,22 @@ impl DisassemblyWidget {
                 if marker == ">" {
                     ListItem::new(line).style(
                         Style::default()
-                            .fg(Color::Yellow)
+                            .fg(Color::Rgb(255, 200, 0))
                             .add_modifier(Modifier::BOLD),
                     )
                 } else {
-                    ListItem::new(line)
+                    ListItem::new(line).style(Style::default().fg(Color::Rgb(200, 200, 200)))
                 }
             })
             .collect();
 
         let list = List::new(items)
-            .block(Block::default().title("Disassembly").borders(Borders::ALL))
+            .block(
+                Block::default()
+                    .title("Disassembly")
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Cyan)),
+            )
             .style(Style::default().fg(Color::White));
 
         f.render_widget(list, area);

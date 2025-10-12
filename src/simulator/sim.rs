@@ -422,21 +422,6 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                     KeyCode::Char('b') => {
                         sim.add_breakpoint(sim.machine.reg_pc);
                     }
-                    KeyCode::Char('l') => {
-                        if let Ok(buffer) = std::fs::read_to_string("program.obj") {
-                            use crate::loader::loader::loader;
-                            loader(buffer);
-                            sim.load_program();
-
-                            // Update object program in TUI
-                            let object_program = {
-                                let obj_prog = OBJECTPROGRAM.lock().unwrap();
-                                obj_prog.clone()
-                            };
-                            tui.update_object_program(object_program);
-                            tui.auto_focus_memory();
-                        }
-                    }
                     _ => {}
                 }
             }

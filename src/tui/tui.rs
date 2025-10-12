@@ -8,7 +8,7 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::Span,
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
 };
 
@@ -41,9 +41,14 @@ impl Tui {
         );
 
         let main_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(0), Constraint::Length(3)])
+            .split(f.area());
+
+        let content_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
-            .split(f.area());
+            .split(main_layout[0]);
 
         let left_layout = Layout::default()
             .direction(Direction::Vertical)
@@ -52,12 +57,12 @@ impl Tui {
                 Constraint::Length(3),
                 Constraint::Min(0),
             ])
-            .split(main_layout[0]);
+            .split(content_layout[0]);
 
         let right_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(main_layout[1]);
+            .split(content_layout[1]);
 
         // Render components
         self.registers.render(f, left_layout[0]);
@@ -65,6 +70,51 @@ impl Tui {
         self.disassembly.render(f, left_layout[2]);
         self.tabs.render(f, right_layout[0]);
         self.memory.render(f, right_layout[1]);
+
+        // Render status bar at bottom
+        self.render_status_bar(f, main_layout[1]);
+    }
+
+    fn render_status_bar(&self, f: &mut Frame, area: ratatui::layout::Rect) {
+        let shortcuts = vec![
+            ("q", "quit"),
+            ("s", "step"),
+            ("r", "run"),
+            ("b", "break"),
+            ("Tab", "switch tabs"),
+            ("↑↓", "scroll"),
+        ];
+
+        let mut spans = Vec::new();
+
+        for (i, (key, desc)) in shortcuts.iter().enumerate() {
+            if i > 0 {
+                spans.push(Span::raw(", "));
+            }
+            spans.push(Span::styled(
+                *key,
+                Style::default()
+                    .fg(Color::Rgb(255, 200, 0))
+                    .add_modifier(Modifier::BOLD),
+            ));
+            spans.push(Span::raw(" "));
+            spans.push(Span::styled(
+                *desc,
+                Style::default().fg(Color::Rgb(200, 200, 200)),
+            ));
+        }
+
+        let status_text = Line::from(spans);
+
+        let paragraph = Paragraph::new(status_text)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Cyan)),
+            )
+            .style(Style::default().bg(Color::Rgb(25, 25, 35)));
+
+        f.render_widget(paragraph, area);
     }
 
     fn render_controls(&self, f: &mut Frame, area: ratatui::layout::Rect) {

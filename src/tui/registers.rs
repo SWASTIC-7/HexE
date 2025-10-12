@@ -42,8 +42,7 @@ impl RegistersWidget {
                     .borders(Borders::ALL),
             )
             .header(Row::new(vec!["Reg", "Value"]).style(Style::default().fg(Color::Yellow)))
-            .style(Style::default().fg(Color::White))
-            .highlight_style(Style::default().fg(Color::Green));
+            .style(Style::default().fg(Color::White));
 
         f.render_widget(register_table, area);
     }

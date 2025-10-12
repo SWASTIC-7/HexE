@@ -11,7 +11,7 @@ mod simulator;
 mod tui;
 
 use assembler::pass2asm;
-
+use simulator::sim::calling_tui;
 //when Assembly file is given
 // Assembly Program (.asm)
 //    ↓
@@ -70,6 +70,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     sim.load_program();
     // sim.add_breakpoint(0x1000);
     sim.step();
+    if let Err(e) = calling_tui() {
+        eprintln!("Error occurred in calling_tui: {}", e);
+        std::process::exit(1);
+    }
 
     Ok(())
 }

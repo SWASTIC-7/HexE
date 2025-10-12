@@ -2,7 +2,6 @@ use super::inistialize_machine::Machine;
 use super::opcode_implementation::{AddressingMode, Opcode};
 use super::{name_to_opcode, register_name_to_code};
 use crate::disassembler::disassembler;
-use crate::loader::loader;
 use crate::predefined::common::{
     AddressFlags, Command, DisAssembledToken, OBJECTPROGRAM, ObjectRecord,
 };
@@ -159,7 +158,7 @@ impl Simulator {
 
     fn get_format2_operand(&self, token: &DisAssembledToken) -> u32 {
         if let Some(reg) = &token.reg {
-            let register_map = reverse_register_map();
+            let _register_map = reverse_register_map();
             let r1 = self::register_name_to_code(&reg.r1).unwrap_or(0);
             let r2 = self::register_name_to_code(&reg.r2).unwrap_or(0);
             ((r1 as u32) << 4) | (r2 as u32)
@@ -298,6 +297,9 @@ pub fn simulator(buffer: String) {
 
     // Run the simulation
     sim.run();
+    sim.remove_breakpoint(0x1000); // Example usage
+    sim.get_disassembly(); // Example usage
+    sim.print_state(); // Example usage
 
     println!("Simulation completed.");
     sim.print_state();
@@ -317,9 +319,6 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
 
     // Main event loop
     loop {
-        // Draw UI
-        terminal.draw(|f| tui.draw(f))?;
-
         // Update TUI with simulator state
         tui.update_registers(
             sim.machine.reg_a,
@@ -329,28 +328,47 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
             sim.machine.reg_sw,
         );
 
-        let mem_slice = &sim.machine.memory[0..256]; // Show first 256 bytes
+        let mem_slice = &sim.machine.memory[0..256];
         tui.update_memory(0, mem_slice);
 
-        // Convert instructions to the format expected by TUI
         let disassembly: Vec<(u32, String, String)> = sim
             .instructions
             .iter()
-            .map(|instr| {
-                (
-                    instr.locctr,
-                    sim.format_instruction(instr),
-                    String::new(), // Add any additional info here if needed
-                )
-            })
+            .map(|instr| (instr.locctr, sim.format_instruction(instr), String::new()))
             .collect();
         tui.update_disassembly(disassembly);
+
+        // Draw UI
+        terminal.draw(|f| tui.draw(f))?;
 
         // Handle events
         if event::poll(std::time::Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') => break,
+                    KeyCode::Left => {
+                        tui.move_focus_left();
+                    }
+                    KeyCode::Right => {
+                        tui.move_focus_right();
+                    }
+                    KeyCode::Enter => {
+                        match tui.get_focused_button() {
+                            0 => {
+                                // Step button
+                                sim.step();
+                            }
+                            1 => {
+                                // Run button
+                                sim.run();
+                            }
+                            2 => {
+                                // Reset button
+                                sim.reset();
+                            }
+                            _ => {}
+                        }
+                    }
                     KeyCode::Char('s') => {
                         sim.step();
                     }
@@ -361,9 +379,7 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                         sim.add_breakpoint(sim.machine.reg_pc);
                     }
                     KeyCode::Char('l') => {
-                        // Example: Load a program
-                        // You might want to implement proper file loading here
-                        if let Ok(buffer) = std::fs::read_to_string("program.obj") {
+                        if let Ok(_buffer) = std::fs::read_to_string("program.obj") {
                             sim.load_program();
                         }
                     }

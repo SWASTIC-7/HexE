@@ -98,10 +98,22 @@ impl Tui {
         self.registers.sw = sw;
     }
 
-    pub fn update_memory(&mut self, start_address: usize, data: &[u8]) {
+    pub fn update_memory(&mut self, start_address: usize, _data: &[u8]) {
+        // Update max address and auto-focus on first load
+        self.memory.update_max_address();
         self.memory.start_address = start_address;
-        let len = data.len().min(self.memory.memory.len() - start_address);
-        self.memory.memory[start_address..start_address + len].copy_from_slice(&data[..len]);
+    }
+
+    pub fn scroll_memory_up(&mut self) {
+        self.memory.scroll_up();
+    }
+
+    pub fn scroll_memory_down(&mut self) {
+        self.memory.scroll_down();
+    }
+
+    pub fn auto_focus_memory(&mut self) {
+        self.memory.auto_focus();
     }
 
     pub fn update_disassembly(&mut self, instructions: Vec<(u32, String, String)>) {

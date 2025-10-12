@@ -331,11 +331,11 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
     };
     tui.update_object_program(object_program);
 
-    // Get symbol table from pass1asm if available
-    // You might need to store this in a global like OBJECTPROGRAM
-    // For now, we'll create an empty one - you can populate it from your assembler
     let symbol_table = SYMBOLTABLE.lock().unwrap().clone();
     tui.update_symbol_table(symbol_table);
+
+    // Auto-focus memory on the object code location
+    tui.auto_focus_memory();
 
     // Main event loop
     loop {
@@ -348,12 +348,9 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
             sim.machine.reg_sw,
         );
 
-        // Update memory view - show memory around PC or from start
-        let mem_start = (sim.machine.reg_pc as usize)
-            .saturating_sub(128)
-            .min(sim.machine.memory.len().saturating_sub(256));
-        let mem_end = (mem_start + 256).min(sim.machine.memory.len());
-        tui.update_memory(mem_start, &sim.machine.memory[mem_start..mem_end]);
+        // Memory widget now reads directly from OBJECTPROGRAM, so we don't need to update it
+        // Just call update_memory with empty data to trigger render
+        tui.update_memory(0, &[]);
 
         // Update disassembly with current instructions
         let disassembly: Vec<(u32, String, String)> = sim
@@ -385,6 +382,12 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                     KeyCode::Right => {
                         tui.move_focus_right();
                     }
+                    KeyCode::Up => {
+                        tui.scroll_memory_up();
+                    }
+                    KeyCode::Down => {
+                        tui.scroll_memory_down();
+                    }
                     KeyCode::Tab => {
                         tui.next_tab();
                     }
@@ -405,6 +408,7 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                                 // Reset button
                                 sim.reset();
                                 sim.load_program();
+                                tui.auto_focus_memory();
                             }
                             _ => {}
                         }
@@ -430,6 +434,7 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                                 obj_prog.clone()
                             };
                             tui.update_object_program(object_program);
+                            tui.auto_focus_memory();
                         }
                     }
                     _ => {}

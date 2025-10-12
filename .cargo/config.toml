@@ -1,0 +1,3 @@
+[test]
+# Run tests serially to avoid global state conflicts
+test-threads = 1

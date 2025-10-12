@@ -1,5 +1,3 @@
-use hexe;
-
 #[cfg(test)]
 mod disassembler_test;
 #[cfg(test)]

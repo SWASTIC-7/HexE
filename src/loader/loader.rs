@@ -20,10 +20,24 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
             .filter(|&c| c != ' ' && c != '^')
             .collect::<String>();
         trimmed_line = &filtered_line;
-        let record_header: char = trimmed_line.chars().next().unwrap();
+
+        let record_header: char = match trimmed_line.chars().next() {
+            Some(c) => c,
+            None => continue,
+        };
         let record: &str = &trimmed_line[1..];
+
         match record_header {
             'H' => {
+                // Header must be at least 18 chars (6 name + 6 start + 6 length)
+                if record.len() < 18 {
+                    println!(
+                        "Invalid header record: too short (expected 18 chars, got {})",
+                        record.len()
+                    );
+                    continue;
+                }
+
                 let program_name = &record[0..6];
                 let start_addr_hex = &record[6..12];
                 let length_hex = &record[12..18];
@@ -39,6 +53,12 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
                 parsed_obj_prog.push(parsed_obj);
             }
             'T' => {
+                // Text record must be at least 8 chars (6 start + 2 length)
+                if record.len() < 8 {
+                    println!("Invalid text record: too short");
+                    continue;
+                }
+
                 let start_addr_hex = &record[0..6];
                 let length_hex = &record[6..8];
                 let obj_code = &record[8..];

@@ -1,7 +1,7 @@
 use ratatui::{
     Frame,
     layout::Constraint,
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     widgets::{Block, Borders, Row, Table},
 };
 
@@ -26,11 +26,19 @@ impl RegistersWidget {
 
     pub fn render(&self, f: &mut Frame, area: ratatui::layout::Rect) {
         let rows = vec![
-            Row::new(vec!["A".to_string(), format!("{:06X}", self.a)]),
-            Row::new(vec!["X".to_string(), format!("{:06X}", self.x)]),
-            Row::new(vec!["L".to_string(), format!("{:06X}", self.l)]),
-            Row::new(vec!["PC".to_string(), format!("{:06X}", self.pc)]),
-            Row::new(vec!["SW".to_string(), format!("{:06X}", self.sw)]),
+            Row::new(vec!["A".to_string(), format!("{:06X}", self.a)])
+                .style(Style::default().fg(Color::Cyan)),
+            Row::new(vec!["X".to_string(), format!("{:06X}", self.x)])
+                .style(Style::default().fg(Color::Cyan)),
+            Row::new(vec!["L".to_string(), format!("{:06X}", self.l)])
+                .style(Style::default().fg(Color::Cyan)),
+            Row::new(vec!["PC".to_string(), format!("{:06X}", self.pc)]).style(
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Row::new(vec!["SW".to_string(), format!("{:06X}", self.sw)])
+                .style(Style::default().fg(Color::Cyan)),
         ];
 
         let widths = vec![Constraint::Length(4), Constraint::Length(8)];

@@ -93,9 +93,10 @@ impl Tui {
         self.registers.sw = sw;
     }
 
-    pub fn update_memory(&mut self, address: usize, data: &[u8]) {
-        self.memory.start_address = address;
-        self.memory.memory[address..address + data.len()].copy_from_slice(data);
+    pub fn update_memory(&mut self, start_address: usize, data: &[u8]) {
+        self.memory.start_address = start_address;
+        let len = data.len().min(self.memory.memory.len() - start_address);
+        self.memory.memory[start_address..start_address + len].copy_from_slice(&data[..len]);
     }
 
     pub fn update_disassembly(&mut self, instructions: Vec<(u32, String, String)>) {

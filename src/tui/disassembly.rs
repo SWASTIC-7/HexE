@@ -1,6 +1,6 @@
 use ratatui::{
     Frame,
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     widgets::{Block, Borders, List, ListItem},
 };
 
@@ -19,7 +19,18 @@ impl DisassemblyWidget {
         let items: Vec<ListItem> = self
             .instructions
             .iter()
-            .map(|(addr, op, instr)| ListItem::new(format!("{:06X}  {:8}  {}", addr, op, instr)))
+            .map(|(addr, instr, marker)| {
+                let line = format!("{} {:06X}  {}", marker, addr, instr);
+                if marker == ">" {
+                    ListItem::new(line).style(
+                        Style::default()
+                            .fg(Color::Yellow)
+                            .add_modifier(Modifier::BOLD),
+                    )
+                } else {
+                    ListItem::new(line)
+                }
+            })
             .collect();
 
         let list = List::new(items)

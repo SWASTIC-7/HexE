@@ -36,11 +36,18 @@ impl Simulator {
     }
 
     pub fn load_program(&mut self) {
-        // loader::loader(buffer);
-        self.find_program_start();
+        self.instructions = disassembler::disassemble();
+
+        // Get starting address from first instruction's locctr
+        if !self.instructions.is_empty() {
+            self.program_start = self.instructions[0].locctr;
+        } else {
+            // Fallback to header record if no instructions
+            self.find_program_start_from_header();
+        }
 
         self.machine.reg_pc = self.program_start;
-        self.instructions = disassembler::disassemble();
+        println!("Program starts at: {:06X}", self.program_start);
         println!("Loaded {} instructions", self.instructions.len());
     }
 
@@ -59,7 +66,8 @@ impl Simulator {
             }
         }
     }
-    fn find_program_start(&mut self) {
+
+    fn find_program_start_from_header(&mut self) {
         let object_program = OBJECTPROGRAM.lock().unwrap();
         for record in object_program.iter() {
             match record {
@@ -70,10 +78,6 @@ impl Simulator {
                 _ => {}
             }
         }
-
-        if self.program_start == 0 && !self.instructions.is_empty() {
-            self.program_start = self.instructions[0].locctr;
-        }
     }
 
     pub fn step(&mut self) -> bool {
@@ -82,15 +86,15 @@ impl Simulator {
 
     pub fn fetch_decode_execute(&mut self) -> bool {
         if let Some(instr) = self.find_instruction_at_pc(self.machine.reg_pc).cloned() {
-            println!(
-                "Executing at {:06X}: {}",
-                self.machine.reg_pc,
-                self.format_instruction(&instr)
-            );
+            // println!(
+            //     "Executing at {:06X}: {}",
+            //     self.machine.reg_pc,
+            //     self.format_instruction(&instr)
+            // );
             self.execute_instruction(&instr);
             true
         } else {
-            println!("No instruction found at PC: {:06X}", self.machine.reg_pc);
+            // println!("No instruction found at PC: {:06X}", self.machine.reg_pc);
             false
         }
     }
@@ -317,9 +321,12 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
     let mut tui = Tui::new();
     let mut sim = Simulator::new();
 
+    // Load program first to initialize simulator state
+    sim.load_program();
+
     // Main event loop
     loop {
-        // Update TUI with simulator state
+        // Update TUI with current simulator state before drawing
         tui.update_registers(
             sim.machine.reg_a,
             sim.machine.reg_x,
@@ -328,13 +335,26 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
             sim.machine.reg_sw,
         );
 
-        let mem_slice = &sim.machine.memory[0..256];
-        tui.update_memory(0, mem_slice);
+        // Update memory view - show memory around PC or from start
+        let mem_start = (sim.machine.reg_pc as usize)
+            .saturating_sub(128)
+            .min(sim.machine.memory.len().saturating_sub(256));
+        let mem_end = (mem_start + 256).min(sim.machine.memory.len());
+        tui.update_memory(mem_start, &sim.machine.memory[mem_start..mem_end]);
 
+        // Update disassembly with current instructions
         let disassembly: Vec<(u32, String, String)> = sim
             .instructions
             .iter()
-            .map(|instr| (instr.locctr, sim.format_instruction(instr), String::new()))
+            .map(|instr| {
+                let is_current = instr.locctr == sim.machine.reg_pc;
+                let marker = if is_current { ">" } else { " " };
+                (
+                    instr.locctr,
+                    sim.format_instruction(instr),
+                    marker.to_string(),
+                )
+            })
             .collect();
         tui.update_disassembly(disassembly);
 
@@ -365,6 +385,7 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                             2 => {
                                 // Reset button
                                 sim.reset();
+                                sim.load_program();
                             }
                             _ => {}
                         }
@@ -379,7 +400,9 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
                         sim.add_breakpoint(sim.machine.reg_pc);
                     }
                     KeyCode::Char('l') => {
-                        if let Ok(_buffer) = std::fs::read_to_string("program.obj") {
+                        if let Ok(buffer) = std::fs::read_to_string("program.obj") {
+                            use crate::loader::loader::loader;
+                            loader(buffer);
                             sim.load_program();
                         }
                     }

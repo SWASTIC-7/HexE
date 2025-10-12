@@ -70,6 +70,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     sim.load_program();
     // sim.add_breakpoint(0x1000);
     sim.step();
+    sim.step();
+    sim.step();
     if let Err(e) = calling_tui() {
         eprintln!("Error occurred in calling_tui: {}", e);
         std::process::exit(1);

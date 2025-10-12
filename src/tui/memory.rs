@@ -20,8 +20,10 @@ impl MemoryWidget {
 
     pub fn render(&self, f: &mut Frame, area: ratatui::layout::Rect) {
         let mut rows = Vec::new();
-        for chunk in self.memory.chunks(16) {
-            let addr = format!("{:05X}", self.start_address + rows.len() * 16);
+        let display_len = 256.min(self.memory.len());
+
+        for (i, chunk) in self.memory[..display_len].chunks(16).enumerate() {
+            let addr = format!("{:05X}", self.start_address + i * 16);
             let hex = chunk
                 .iter()
                 .map(|b| format!("{:02X}", b))
@@ -30,7 +32,7 @@ impl MemoryWidget {
             rows.push(ratatui::widgets::Row::new(vec![addr, hex]));
         }
 
-        let widths = vec![Constraint::Length(10), Constraint::Length(50)];
+        let widths = vec![Constraint::Length(10), Constraint::Min(50)];
 
         let memory_table = Table::new(rows, widths)
             .block(Block::default().title("Memory").borders(Borders::ALL))

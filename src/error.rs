@@ -4,12 +4,39 @@ use std::time::SystemTime;
 
 pub fn log_error(message: &str) {
     let now = SystemTime::now();
-    let log_entry = format!("{:?}: {}\n", now, message);
+    let log_entry = format!("{:?}: ERROR - {}\n", now, message);
 
-    let mut file = OpenOptions::new()
+    if let Ok(mut file) = OpenOptions::new()
         .create(true)
         .append(true)
         .open("error.log")
-        .expect("Unable to open error.log");
-    file.write_all(log_entry.as_bytes()).expect("Write failed");
+    {
+        let _ = file.write_all(log_entry.as_bytes());
+    }
+}
+
+pub fn log_info(message: &str) {
+    let now = SystemTime::now();
+    let log_entry = format!("{:?}: INFO - {}\n", now, message);
+
+    if let Ok(mut file) = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("simulator.log")
+    {
+        let _ = file.write_all(log_entry.as_bytes());
+    }
+}
+
+pub fn log_warning(message: &str) {
+    let now = SystemTime::now();
+    let log_entry = format!("{:?}: WARNING - {}\n", now, message);
+
+    if let Ok(mut file) = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("simulator.log")
+    {
+        let _ = file.write_all(log_entry.as_bytes());
+    }
 }

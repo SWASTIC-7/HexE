@@ -116,15 +116,18 @@ HexE/
 
 ## Development Status
 
-- ✅ Complete SIC/XE instruction set
-- ✅ All addressing modes
-- ✅ Symbol table generation
-- ✅ Object code generation
-- ✅ Interactive debugger
-- ✅ Memory visualization
-- 🚧 Literal pool support
-- 🚧 External references
-- 🚧 Control sections
+- [x] Complete SIC/XE instruction set
+- [x] All addressing modes
+- [x] Symbol table generation
+- [x] Object code generation
+- [x] Memory visualization
+- [ ] Literal pool support
+- [ ] External references
+- [x] Control sections
+- [ ] EQU support
+- [ ] Debugger
+- [ ] Relocation
+- [ ] Linker
 
 ## License
 

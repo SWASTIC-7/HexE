@@ -3,14 +3,14 @@ use crate::predefined::common::{Command, LabeledParsedLines, SYMBOLTABLE, Symbol
 
 pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolTable>) {
     let parsed_lines = parser(buffer);
-    println!("Parsed {} lines", parsed_lines.len()); // Debug: check if parser returns data
+    // println!("Parsed {} lines", parsed_lines.len()); // Debug: check if parser returns data
     let mut symbol_table = SYMBOLTABLE.lock().unwrap();
     let mut labeledparsedline: Vec<LabeledParsedLines> = Vec::new();
     let mut locctr: u32 = 0x9999999;
     let mut length = 0;
     let mut startaddr = 0x00;
     for lines in parsed_lines.iter() {
-        println!("Processing line: {:?} with loccctr {:x?}", lines, locctr); // Debug: see what each line contains
+        // println!("Processing line: {:?} with loccctr {:x?}", lines, locctr); // Debug: see what each line contains
         labeledparsedline.push(LabeledParsedLines {
             parsedtoken: lines.clone(),
             locctr,

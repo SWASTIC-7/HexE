@@ -1,3 +1,4 @@
+use crate::error::{log_error, log_info, log_warning};
 use crate::predefined::common::{
     AddressFlags, Command, DisAssembledToken, Instruction, OBJECTPROGRAM, ObjectRecord, OpCode, Reg,
 };
@@ -6,6 +7,8 @@ use crate::predefined::registers::reverse_register_map;
 use hex;
 
 pub fn disassemble() -> Vec<DisAssembledToken> {
+    log_info("Starting disassembly process");
+
     let mut starting_addr = 0u32;
     let mut locctr: u32;
     let mut parsed_dissassembled_code: Vec<DisAssembledToken> = Vec::new();
@@ -17,19 +20,22 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 start,
                 length,
             } => {
-                let _file_name = name;
                 starting_addr = *start;
-                // locctr = starting_addr;
-                let _prog_length = *length;
+                log_info(&format!(
+                    "Program: {}, Start: {:06X}, Length: {:06X}",
+                    name, start, length
+                ));
             }
             ObjectRecord::Text {
                 start,
                 length,
                 objcodes,
             } => {
-                let _start_text_addr = *start;
-                let _text_section_length = *length;
-                locctr = *start; // Set locctr to text section start
+                locctr = *start;
+                log_info(&format!(
+                    "Text section at {:06X}, length: {:02X}",
+                    start, length
+                ));
 
                 for item in objcodes.iter() {
                     let instruction_size = match item.len() / 2 {
@@ -183,11 +189,11 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                             4 // Return instruction size
                         }
                         _ => {
-                            println!(
+                            log_warning(&format!(
                                 "Unexpected instruction length: {} bytes for instruction: {}",
                                 item.len() / 2,
                                 item
-                            );
+                            ));
                             0 // No size increment for unknown instructions
                         }
                     };
@@ -199,26 +205,33 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
             ObjectRecord::End { start } => {
                 let end_start_addr = *start;
                 if end_start_addr == starting_addr {
-                    println!("File disassembled successfully");
+                    log_info("File disassembled successfully");
                     break;
                 } else {
-                    println!("Corrupt object program: start addresses don't match");
+                    log_error(&format!(
+                        "Corrupt object program: start address {:06X} doesn't match end address {:06X}",
+                        starting_addr, end_start_addr
+                    ));
                 }
             }
             ObjectRecord::Modification { address, length } => {
-                // TODO: Handle modification records
-                println!(
+                log_info(&format!(
                     "Modification record found at address {:06X}, length: {}",
                     address, length
-                );
+                ));
             }
         }
     }
 
-    // Print disassembled instructions in a readable format
-    println!("\n=== DISASSEMBLED PROGRAM ===");
+    log_info(&format!(
+        "Disassembly completed: {} instructions",
+        parsed_dissassembled_code.len()
+    ));
+
+    // Print disassembled instructions
+    log_info("=== DISASSEMBLED PROGRAM ===");
     for item in &parsed_dissassembled_code {
-        println!("{}", format_disassembled_instruction(item));
+        log_info(&format_disassembled_instruction(item));
     }
 
     parsed_dissassembled_code

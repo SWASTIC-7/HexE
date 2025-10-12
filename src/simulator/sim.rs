@@ -2,6 +2,7 @@ use super::inistialize_machine::Machine;
 use super::opcode_implementation::{AddressingMode, Opcode};
 use super::{name_to_opcode, register_name_to_code};
 use crate::disassembler::disassembler;
+use crate::error::{log_error, log_info};
 use crate::predefined::common::{
     AddressFlags, Command, DisAssembledToken, OBJECTPROGRAM, ObjectRecord, SYMBOLTABLE,
 };
@@ -44,25 +45,27 @@ impl Simulator {
     pub fn load_program(&mut self) {
         self.instructions = disassembler::disassemble();
 
-        // Get starting address from first instruction's locctr
         if !self.instructions.is_empty() {
             self.program_start = self.instructions[0].locctr;
         } else {
-            // Fallback to header record if no instructions
             self.find_program_start_from_header();
         }
 
         self.machine.reg_pc = self.program_start;
-        println!("Program starts at: {:06X}", self.program_start);
-        println!("Loaded {} instructions", self.instructions.len());
+        log_info(&format!("Program starts at: {:06X}", self.program_start));
+        log_info(&format!("Loaded {} instructions", self.instructions.len()));
     }
 
     pub fn run(&mut self) {
         self.running = true;
+        log_info("Starting program execution");
+
         while self.running {
-            // Check for breakpoints
             if self.breakpoints.contains(&self.machine.reg_pc) {
-                println!("Breakpoint hit at address: {:06X}", self.machine.reg_pc);
+                log_info(&format!(
+                    "Breakpoint hit at address: {:06X}",
+                    self.machine.reg_pc
+                ));
                 self.running = false;
                 break;
             }
@@ -71,6 +74,8 @@ impl Simulator {
                 self.running = false;
             }
         }
+
+        log_info("Program execution completed");
     }
 
     fn find_program_start_from_header(&mut self) {
@@ -139,12 +144,12 @@ impl Simulator {
                             self.machine.reg_pc += 4;
                         }
                         _ => {
-                            println!("Unknown instruction format: {}", format);
+                            log_error(&format!("Unknown instruction format: {}", format));
                             self.machine.reg_pc += 1;
                         }
                     }
                 } else {
-                    println!("Unknown opcode: 0x{:02X}", opcode_byte);
+                    log_error(&format!("Unknown opcode: 0x{:02X}", opcode_byte));
                     self.machine.reg_pc += 1;
                 }
             }
@@ -261,7 +266,7 @@ impl Simulator {
     pub fn add_breakpoint(&mut self, address: u32) {
         if !self.breakpoints.contains(&address) {
             self.breakpoints.push(address);
-            println!("Breakpoint added at {:06X}", address);
+            log_info(&format!("Breakpoint added at {:06X}", address));
         }
     }
 
@@ -313,6 +318,8 @@ impl Simulator {
 // }
 
 pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
+    log_info("Starting TUI simulator");
+
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -323,8 +330,6 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
     // Create app state
     let mut tui = Tui::new();
     let mut sim = Simulator::new();
-
-    // Load program first to initialize simulator state
     sim.load_program();
 
     // Load object program and symbol table from global state
@@ -440,5 +445,6 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     terminal.show_cursor()?;
 
+    log_info("TUI simulator shut down successfully");
     Ok(())
 }

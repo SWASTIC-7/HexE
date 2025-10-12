@@ -1,3 +1,4 @@
+use crate::error::log_warning;
 use crate::predefined::common::{OBJECTPROGRAM, ObjectRecord};
 use crate::predefined::opcode::get_instruction_format;
 
@@ -31,10 +32,10 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
             'H' => {
                 // Header must be at least 18 chars (6 name + 6 start + 6 length)
                 if record.len() < 18 {
-                    println!(
+                    log_warning(&format!(
                         "Invalid header record: too short (expected 18 chars, got {})",
                         record.len()
-                    );
+                    ));
                     continue;
                 }
 
@@ -55,7 +56,7 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
             'T' => {
                 // Text record must be at least 8 chars (6 start + 2 length)
                 if record.len() < 8 {
-                    println!("Invalid text record: too short");
+                    log_warning("Invalid text record: too short");
                     continue;
                 }
 
@@ -124,12 +125,14 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
 
                         //  If nothing was processed, increment by 2 to avoid infinite loop
                         if !processed {
-                            println!("Unknown opcode: 0x{:02X}, skipping 2 bytes", byte_val);
+                            log_warning(&format!(
+                                "Unknown opcode: 0x{:02X}, skipping 2 bytes",
+                                byte_val
+                            ));
                             i += 2;
                         }
                     } else {
-                        //  If hex parsing fails, increment to avoid infinite loop
-                        println!("Invalid hex string: {}, skipping 2 bytes", s);
+                        log_warning(&format!("Invalid hex string: {}, skipping 2 bytes", s));
                         i += 2;
                     }
                 }
@@ -149,7 +152,7 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
                 parsed_obj_prog.push(parsed_obj);
             }
             _ => {
-                println!("Unknown record type: {}", record_header);
+                log_warning(&format!("Unknown record type: {}", record_header));
             }
         }
     }

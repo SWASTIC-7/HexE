@@ -5,13 +5,15 @@ use std::io::Read;
 use std::path::Path;
 mod assembler;
 mod disassembler;
+mod error;
 mod loader;
 mod predefined;
 mod simulator;
 mod tui;
-
 use assembler::pass2asm;
+use error::{log_error, log_info};
 use simulator::sim::calling_tui;
+
 //when Assembly file is given
 // Assembly Program (.asm)
 //    ↓
@@ -35,11 +37,16 @@ use simulator::sim::calling_tui;
 // Simulator (Disassemble + tui +  Execution)
 
 fn main() -> Result<(), Box<dyn Error>> {
+    log_info("HexE Simulator started");
+
     let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        eprintln!("Usage: {} <filename>", args[0]);
-        std::process::exit(1);
+
+    if args.len() != 2 {
+        log_error("Usage: cargo run -- <filename>");
+        eprintln!("Usage: cargo run -- <filename>");
+        return Ok(());
     }
+
     let file_path: String = args[1].clone();
     let ext = Path::new(&file_path)
         .extension()
@@ -50,32 +57,38 @@ fn main() -> Result<(), Box<dyn Error>> {
     file.read_to_string(&mut buffer)?;
     match ext {
         "asm" => {
-            println!("Running assembler on {}", file_path);
+            log_info("Assembling source file");
             pass2asm::pass2asm(&buffer);
+            simulator::sim::calling_tui().unwrap_or_else(|e| {
+                log_error(&format!("TUI error: {}", e));
+                eprintln!("Error: {}", e);
+            });
         }
         "txt" => {
-            println!("Running loader on {}", file_path);
+            log_info("Loading object file");
             loader::loader::loader(buffer.clone());
+            simulator::sim::calling_tui().unwrap_or_else(|e| {
+                log_error(&format!("TUI error: {}", e));
+                eprintln!("Error: {}", e);
+            });
         }
         _ => {
-            eprintln!("Unsupported file extension: {}", ext);
-            std::process::exit(1);
+            log_error(&format!("Unsupported file extension: {}", ext));
+            eprintln!("Error: Unsupported file type. Use .asm or .txt files.");
         }
     }
-    // lexer::tokenize(&buffer);
-    // pass2asm::pass2asm(&buffer);
-    // loader::loader::loader(buffer);
-    // simulator::sim::simulator(buffer);
+
     let mut sim = simulator::sim::Simulator::new();
     sim.load_program();
     // sim.add_breakpoint(0x1000);
     sim.step();
-    sim.step();
-    sim.step();
+
     if let Err(e) = calling_tui() {
         eprintln!("Error occurred in calling_tui: {}", e);
         std::process::exit(1);
     }
+
+    log_info("HexE Simulator finished");
 
     Ok(())
 }

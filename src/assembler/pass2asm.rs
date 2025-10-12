@@ -1,4 +1,5 @@
 use super::pass1asm::pass1asm;
+use crate::error::{log_error, log_warning};
 use crate::predefined::common::{
     Command, LabeledParsedLines, OBJECTPROGRAM, ObjectRecord, SymbolTable,
 };
@@ -52,7 +53,7 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                     object_program.push(ObjectRecord::End { start: start_addr });
                 }
                 _ => {
-                    print!("not correct directive");
+                    log_warning(&format!("Unknown directive: {}", directive));
                 }
             },
             Command::Instruction(instr) => {
@@ -139,7 +140,10 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                         }
                     }
                     _ => {
-                        println!(" Invalid format found to make object code");
+                        log_error(&format!(
+                            "Invalid format {} found to make object code",
+                            format
+                        ));
                     }
                 }
             }
@@ -225,7 +229,7 @@ pub fn object_code3(
         if v.to_uppercase() == "X" {
             flag_x = 1;
         } else {
-            println!("incorrect register in indexed mode");
+            log_warning(&format!("Incorrect register '{}' in indexed mode", v));
         }
     }
     if let Some(opr) = operand1 {
@@ -283,7 +287,10 @@ pub fn object_code3(
                 }
             }
         } else {
-            println!("{}", operand);
+            log_warning(&format!(
+                "Symbol '{}' not found in symbol table, treating as immediate value",
+                operand
+            ));
             let displacement: i32 = operand.parse().expect("not a vaid string");
             let disp_12bit = (displacement & 0xFFF) as u16;
             let first_byte: u8 = opcode | flag_n << 1 | flag_i;
@@ -321,7 +328,7 @@ pub fn object_code4(
         if v.to_uppercase() == "X" {
             flag_x = 1;
         } else {
-            println!("incorrect register in indexed mode");
+            log_warning(&format!("Incorrect register '{}' in indexed mode", v));
         }
     }
     if let Some(opr) = operand1 {

@@ -1,77 +1,135 @@
-## A full-fledged Assembler, Linker, Loader and Simulator for SIC/XE machine 
+# HexE - SIC/XE Assembler & Simulator
 
+A comprehensive toolchain for the SIC/XE (Simplified Instructional Computer - Extended) architecture, featuring a two-pass assembler, loader, disassembler, and an interactive TUI-based debugger.
 
-- [x] Parse the code to valid instructions from assembly file
-- [x] Get the valid opcode from the instructions
-- [x] Assembler Pass 1 -- Symbol Table, Object program , relocation table
-- [x] Assembler Pass 2
-- [x] Step wise running the instruction
-- [x] Floating point feature
-- [x] All the addressing mode -- PC, BASE, Immediate, Indirect, Indexed
-- [x] Supports all the Directive  
-- [x] Simulator
+![TUI Simulator](reference_material/tui_small.png)
 
-## Feature
-- [x] supports all the sic/xe instruction
-- [x] supports all the sic/xe directive
-- [x] supports literals
-- [x] supports base 
-- [x] provides tui simulator
-- [x] debugger
+## Features
 
-## Usage
-To run assembly language
+- **Two-Pass Assembler**: Generates symbol tables and object code with full support for SIC/XE instruction formats
+- **Loader**: Parses and loads object programs into memory
+- **Disassembler**: Converts object code back to assembly mnemonics
+- **Interactive Debugger**: Terminal-based UI for step-by-step execution and real-time state inspection
+- **Complete Instruction Set**: Supports all SIC/XE instructions (Format 1, 2, 3, and 4)
+- **Addressing Modes**: PC-relative, base-relative, immediate, indirect, and indexed addressing
+- **Assembler Directives**: START, END, BYTE, WORD, RESB, RESW, BASE, and more
 
-``` Cargo run -- <file path>.asm ```
+## Getting Started
 
-note file must be .asm extenstion
- 
- To run Object Program
+### Prerequisites
 
- ``` Cargo run -- <file_path>.txt ```
+- Rust 1.70 or higher
+- Cargo package manager
 
- note file must have .txt extenstion
+### Installation
 
-## TUI Simulator Controls
+```bash
+git clone https://github.com/SWASTIC-7/HexE
+cd HexE
+cargo build --release
+```
 
-The TUI (Terminal User Interface) provides an interactive debugging environment for your SIC/XE programs.
+### Usage
 
-### Keyboard Shortcuts
+**Assemble and simulate a source file:**
+```bash
+cargo run -- program.asm
+```
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| **q** | Quit | Exit the TUI simulator |
-| **s** | Step | Execute a single instruction (step-by-step execution) |
-| **r** | Run | Run the program until completion or breakpoint |
-| **b** | Breakpoint | Add a breakpoint at the current PC address |
-| **Tab** | Switch Tabs | Cycle between Object Program and Symbol Table tabs |
-| **Shift+Tab** | Previous Tab | Go to the previous tab |
-| **↑** | Scroll Up | Scroll memory dump upward |
-| **↓** | Scroll Down | Scroll memory dump downward |
-| **←** | Focus Left | Move focus to the previous control button |
-| **→** | Focus Right | Move focus to the next control button |
-| **Enter** | Activate | Execute the currently focused button (Step/Run/Reset) |
+**Load and simulate an object program:**
+```bash
+cargo run -- program.txt
+```
 
+## TUI Simulator
 
-### UI Components
+The interactive debugger provides real-time visualization of the machine state during program execution.
 
-1. **CPU Registers** (Top-Left): Displays current values of A, X, L, PC, and SW registers
-2. **Control Buttons** (Below Registers): Interactive buttons for Step/Run/Reset
-3. **Disassembly** (Left Panel): Shows disassembled instructions with current PC marked by `>`
-4. **Object Code/Symbol Table** (Top-Right): Tabbed view showing object program or symbol table
-5. **Memory Dump** (Bottom-Right): Hexadecimal memory dump with scrolling support
-6. **Reference Bar** (Bottom): Quick reference for keyboard shortcuts
+### Interface Components
 
+| Component | Description |
+|-----------|-------------|
+| **CPU Registers** | Current values of A, X, L, PC, and SW registers |
+| **Disassembly** | Assembly listing with PC indicator (`>`) |
+| **Object Code** | Hexadecimal object code at each address |
+| **Symbol Table** | Labels and their corresponding addresses |
+| **Memory Dump** | Complete memory view in hexdump format |
 
- ## Project Status
-- [x] Basic instruction parsing
-- [x] Pass 1 assembler
-- [x] Pass 2 assembler
-- [x] TUI implementation
-- [x] Basic simulation
-- [x] Loader
-- [x] Disassembler
-- [ ] Full floating-point support
-- [ ] Complete directive support
-- [ ] Literal pool implementation
-- [ ] Advanced debugging features
+### TUI Keyboard Controls
+
+| Key | Function |
+|-----|----------|
+| `q` | Exit simulator |
+| `s` | Execute single instruction |
+| `r` | Run until breakpoint or completion |
+| `b` | Set breakpoint at current PC |
+| `Tab` | Switch between Object Code and Symbol Table |
+| `↑` `↓` | Scroll through memory |
+| `←` `→` | Navigate control buttons |
+| `Enter` | Activate selected button |
+
+## Architecture
+
+### Assembler Pipeline
+
+1. **Pass 1**: Symbol table generation, location counter management
+2. **Pass 2**: Object code generation, address resolution
+
+### Object Program Format
+
+```
+H^PROGNAME^001000^000100    Header record
+T^001000^1E^4B1000...        Text record with object code
+E^001000                     End record
+```
+
+### Supported Formats
+
+- **Format 1**: Single-byte instructions (e.g., FIX, FLOAT)
+- **Format 2**: Two-byte register operations (e.g., CLEAR, COMPR)
+- **Format 3**: Three-byte with 12-bit displacement
+- **Format 4**: Four-byte extended with 20-bit address
+
+## Testing
+
+Run the test suite:
+```bash
+cargo test
+```
+
+Tests are executed serially to avoid global state conflicts.
+
+## Project Structure
+
+```
+HexE/
+├── src/
+│   ├── assembler/     # Two-pass assembler implementation
+│   ├── disassembler/  # Object code to assembly converter
+│   ├── loader/        # Object program loader
+│   ├── simulator/     # Execution engine
+│   ├── tui/          # Terminal UI components
+│   └── predefined/    # Opcode tables and definitions
+├── tests/            # Integration tests
+└── reference_material/ # Documentation and screenshots
+```
+
+## Development Status
+
+- ✅ Complete SIC/XE instruction set
+- ✅ All addressing modes
+- ✅ Symbol table generation
+- ✅ Object code generation
+- ✅ Interactive debugger
+- ✅ Memory visualization
+- 🚧 Literal pool support
+- 🚧 External references
+- 🚧 Control sections
+
+## License
+
+This project is developed for educational purposes.
+
+## Acknowledgments
+
+Built following the SIC/XE architecture specification from "System Software: An Introduction to Systems Programming" by Leland L. Beck.

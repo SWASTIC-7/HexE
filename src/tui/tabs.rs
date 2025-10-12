@@ -3,7 +3,6 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, Row, Table, Tabs},
 };
 
@@ -104,49 +103,6 @@ impl TabsWidget {
             .style(Style::default().fg(Color::White));
 
         f.render_widget(list, area);
-    }
-
-    fn render_object_code_hexdump(&self, f: &mut Frame, area: ratatui::layout::Rect) {
-        let mut rows: Vec<Row> = Vec::new();
-
-        // Add header row
-        rows.push(
-            Row::new(vec!["Address", "Object Code"]).style(
-                Style::default()
-                    .fg(Color::Rgb(255, 200, 0))
-                    .add_modifier(Modifier::BOLD),
-            ),
-        );
-
-        for record in &self.object_program {
-            match record {
-                ObjectRecord::Text {
-                    start, objcodes, ..
-                } => {
-                    let addr_str = format!("{:06X}", start);
-                    let code_str = objcodes.join(" ");
-
-                    rows.push(
-                        Row::new(vec![addr_str, code_str])
-                            .style(Style::default().fg(Color::Rgb(200, 200, 200))),
-                    );
-                }
-                _ => {}
-            }
-        }
-
-        let widths = &[Constraint::Length(10), Constraint::Length(30)];
-
-        let table = Table::new(rows, widths)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Object Code Dump")
-                    .border_style(Style::default().fg(Color::Cyan)),
-            )
-            .style(Style::default().fg(Color::White));
-
-        f.render_widget(table, area);
     }
 
     fn render_symbol_table(&self, f: &mut Frame, area: ratatui::layout::Rect) {

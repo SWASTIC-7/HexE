@@ -56,8 +56,8 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                 }
             },
             Command::Instruction(instr) => {
-                let format = instr.opcode.format.clone();
-                let opcode = instr.opcode.code.clone();
+                let format = instr.opcode.format;
+                let opcode = instr.opcode.code;
                 let locctr = lines.locctr;
                 let obj_code;
                 match &format {

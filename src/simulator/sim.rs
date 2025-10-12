@@ -262,52 +262,52 @@ impl Simulator {
         }
     }
 
-    pub fn remove_breakpoint(&mut self, address: u32) {
-        if let Some(pos) = self.breakpoints.iter().position(|&x| x == address) {
-            self.breakpoints.remove(pos);
-            println!("Breakpoint removed from {:06X}", address);
-        }
-    }
+    // pub fn remove_breakpoint(&mut self, address: u32) {
+    //     if let Some(pos) = self.breakpoints.iter().position(|&x| x == address) {
+    //         self.breakpoints.remove(pos);
+    //         println!("Breakpoint removed from {:06X}", address);
+    //     }
+    // }
 
-    pub fn get_disassembly(&self) -> &Vec<DisAssembledToken> {
-        &self.instructions
-    }
+    // pub fn get_disassembly(&self) -> &Vec<DisAssembledToken> {
+    //     &self.instructions
+    // }
 
-    pub fn print_state(&self) {
-        println!("\n=== MACHINE STATE ===");
-        println!(
-            "A: {:06X}  X: {:06X}  L: {:06X}",
-            self.machine.reg_a, self.machine.reg_x, self.machine.reg_l
-        );
-        println!(
-            "B: {:06X}  S: {:06X}  T: {:06X}",
-            self.machine.reg_b, self.machine.reg_s, self.machine.reg_t
-        );
-        println!(
-            "F: {:.2}     PC: {:06X}  SW: {:06X}",
-            self.machine.reg_f, self.machine.reg_pc, self.machine.reg_sw
-        );
-        println!("CC: {}     Running: {}", self.machine.cc, self.running);
-    }
+    // pub fn print_state(&self) {
+    //     println!("\n=== MACHINE STATE ===");
+    //     println!(
+    //         "A: {:06X}  X: {:06X}  L: {:06X}",
+    //         self.machine.reg_a, self.machine.reg_x, self.machine.reg_l
+    //     );
+    //     println!(
+    //         "B: {:06X}  S: {:06X}  T: {:06X}",
+    //         self.machine.reg_b, self.machine.reg_s, self.machine.reg_t
+    //     );
+    //     println!(
+    //         "F: {:.2}     PC: {:06X}  SW: {:06X}",
+    //         self.machine.reg_f, self.machine.reg_pc, self.machine.reg_sw
+    //     );
+    //     println!("CC: {}     Running: {}", self.machine.cc, self.running);
+    // }
 }
 
 // Main simulator function for compatibility
-pub fn simulator(buffer: String) {
-    let mut sim = Simulator::new();
-    sim.load_program();
+// pub fn simulator(buffer: String) {
+//     let mut sim = Simulator::new();
+//     sim.load_program();
 
-    println!("Starting simulation...");
-    sim.print_state();
+//     println!("Starting simulation...");
+//     sim.print_state();
 
-    // Run the simulation
-    sim.run();
-    sim.remove_breakpoint(0x1000); // Example usage
-    sim.get_disassembly(); // Example usage
-    sim.print_state(); // Example usage
+//     // Run the simulation
+//     sim.run();
+//     sim.remove_breakpoint(0x1000); // Example usage
+//     sim.get_disassembly(); // Example usage
+//     sim.print_state(); // Example usage
 
-    println!("Simulation completed.");
-    sim.print_state();
-}
+//     println!("Simulation completed.");
+//     sim.print_state();
+// }
 
 pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
     // Setup terminal

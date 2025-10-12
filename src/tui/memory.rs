@@ -6,6 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState},
 };
 
+#[allow(dead_code)]
 pub struct MemoryWidget {
     pub memory: Vec<u8>,
     pub start_address: usize,
@@ -129,7 +130,7 @@ impl MemoryWidget {
         );
     }
 
-    fn format_memory_line_colored(&self, addr: u32, memory: &[u8]) -> Line {
+    fn format_memory_line_colored<'a>(&'a self, addr: u32, memory: &'a [u8]) -> Line<'a> {
         let mut spans = Vec::new();
 
         // Address in golden yellow
@@ -162,25 +163,25 @@ impl MemoryWidget {
     }
 
     // Keep the old method for compatibility if needed elsewhere
-    fn format_memory_line(&self, addr: u32, memory: &[u8]) -> String {
-        let mut result = format!("{:07x}", addr);
+    // fn format_memory_line(&self, addr: u32, memory: &[u8]) -> String {
+    //     let mut result = format!("{:07x}", addr);
 
-        // Add 16 bytes in pairs
-        for i in 0..16 {
-            if i % 2 == 0 {
-                result.push(' ');
-            }
+    //     // Add 16 bytes in pairs
+    //     for i in 0..16 {
+    //         if i % 2 == 0 {
+    //             result.push(' ');
+    //         }
 
-            let byte_addr = (addr + i) as usize;
-            if byte_addr < memory.len() {
-                result.push_str(&format!("{:02x}", memory[byte_addr]));
-            } else {
-                result.push_str("00");
-            }
-        }
+    //         let byte_addr = (addr + i) as usize;
+    //         if byte_addr < memory.len() {
+    //             result.push_str(&format!("{:02x}", memory[byte_addr]));
+    //         } else {
+    //             result.push_str("00");
+    //         }
+    //     }
 
-        result
-    }
+    //     result
+    // }
 
     pub fn update_max_address(&mut self) {
         // Calculate max address from OBJECTPROGRAM

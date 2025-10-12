@@ -21,6 +21,12 @@ pub struct Tui {
     focused_button: usize,
 }
 
+impl Default for Tui {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Tui {
     pub fn new() -> Self {
         Self {
@@ -76,7 +82,7 @@ impl Tui {
     }
 
     fn render_status_bar(&self, f: &mut Frame, area: ratatui::layout::Rect) {
-        let shortcuts = vec![
+        let shortcuts = [
             ("q", "quit"),
             ("s", "step"),
             ("r", "run"),

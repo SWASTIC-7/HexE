@@ -363,7 +363,7 @@ impl Opcode {
     fn divide(&self, machine: &mut Machine, operand: u32, mode: AddressingMode) {
         let value = self.get_operand_value(machine, operand, &mode);
         if value != 0 {
-            machine.reg_a = machine.reg_a / value;
+            machine.reg_a /= value;
         }
     }
 

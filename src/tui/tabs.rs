@@ -12,6 +12,12 @@ pub struct TabsWidget {
     pub symbol_table: Vec<SymbolTable>,
 }
 
+impl Default for TabsWidget {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TabsWidget {
     pub fn new() -> Self {
         Self {

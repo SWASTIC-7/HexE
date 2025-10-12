@@ -209,7 +209,7 @@ pub fn object_code3(
     opcode: u8,
     operand1: &Option<String>,
     operand2: &Option<String>,
-    symbol_table: &Vec<SymbolTable>,
+    symbol_table: &[SymbolTable],
     current_locctr: u32,
     base_address: u32,
 ) -> String {
@@ -230,19 +230,19 @@ pub fn object_code3(
     }
     if let Some(opr) = operand1 {
         let mut operand = opr.clone();
-        if opr.starts_with('#') {
+        if let Some(stripped) = opr.strip_prefix('#') {
             flag_i = 1;
-            operand = opr[1..].to_string();
-        } else if opr.starts_with('@') {
+            operand = stripped.to_string();
+        } else if let Some(stripped) = opr.strip_prefix('@') {
             flag_n = 1;
-            operand = opr[1..].to_string();
+            operand = stripped.to_string();
         }
 
         if let Some(sym) = symbol_table.iter().find(|sym| sym.label == operand) {
             let target_addr = sym.address;
             let program_counter = current_locctr + 3;
             let mut displacement = target_addr as i32 - program_counter as i32;
-            if displacement >= -2048 && displacement <= 2047 {
+            if (-2048..=2047).contains(&displacement) {
                 flag_p = 1;
                 if flag_n == 0 && flag_i == 0 {
                     flag_i = 1;
@@ -261,7 +261,7 @@ pub fn object_code3(
                 return format!("{:02X}{:02X}{:02X}", first_byte, second_byte, third_byte);
             } else {
                 displacement = target_addr as i32 - base_address as i32 + program_counter as i32;
-                if displacement >= 0 && displacement <= 4095 {
+                if (0..=4095).contains(&displacement) {
                     flag_b = 1;
                     if flag_n == 0 && flag_i == 0 {
                         flag_i = 1;
@@ -306,7 +306,7 @@ pub fn object_code4(
     opcode: u8,
     operand1: &Option<String>,
     operand2: &Option<String>,
-    symbol_table: &Vec<SymbolTable>,
+    symbol_table: &[SymbolTable],
     _current_locctr: u32,
 ) -> String {
     let mut flag_n: u8 = 0;
@@ -326,18 +326,18 @@ pub fn object_code4(
     }
     if let Some(opr) = operand1 {
         let mut operand = opr.clone();
-        if opr.starts_with('#') {
+        if let Some(stripped) = opr.strip_prefix('#') {
             flag_i = 1;
-            operand = opr[1..].to_string();
-        } else if opr.starts_with('@') {
+            operand = stripped.to_string();
+        } else if let Some(stripped) = opr.strip_prefix('@') {
             flag_n = 1;
-            operand = opr[1..].to_string();
+            operand = stripped.to_string();
         }
 
         if let Some(sym) = symbol_table.iter().find(|sym| sym.label == operand) {
             let target_addr = sym.address;
 
-            let addr_20bit = (target_addr & 0xFFFFF) as u32; // 20-bit address
+            let addr_20bit = target_addr & 0xFFFFF; // 20-bit address
 
             if flag_n == 0 && flag_i == 0 {
                 flag_i = 1;

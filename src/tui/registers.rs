@@ -13,6 +13,12 @@ pub struct RegistersWidget {
     pub sw: u32,
 }
 
+impl Default for RegistersWidget {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RegistersWidget {
     pub fn new() -> Self {
         Self {

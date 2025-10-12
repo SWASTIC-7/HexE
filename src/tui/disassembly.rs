@@ -8,6 +8,12 @@ pub struct DisassemblyWidget {
     pub instructions: Vec<(u32, String, String)>, // (address, opcode, instruction)
 }
 
+impl Default for DisassemblyWidget {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DisassemblyWidget {
     pub fn new() -> Self {
         Self {

@@ -7,7 +7,7 @@ use crate::predefined::common::{
 };
 use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
-use crate::tui::tui::Tui;
+use crate::tui::Tui;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -22,6 +22,12 @@ pub struct Simulator {
     pub running: bool,
     pub instructions: Vec<DisAssembledToken>,
     pub program_start: u32,
+}
+
+impl Default for Simulator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Simulator {
@@ -70,12 +76,9 @@ impl Simulator {
     fn find_program_start_from_header(&mut self) {
         let object_program = OBJECTPROGRAM.lock().unwrap();
         for record in object_program.iter() {
-            match record {
-                ObjectRecord::Header { start, .. } => {
-                    self.program_start = *start;
-                    break;
-                }
-                _ => {}
+            if let ObjectRecord::Header { start, .. } = record {
+                self.program_start = *start;
+                break;
             }
         }
     }
@@ -372,58 +375,58 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
         terminal.draw(|f| tui.draw(f))?;
 
         // Handle events
-        if event::poll(std::time::Duration::from_millis(100))? {
-            if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char('q') => break,
-                    KeyCode::Left => {
-                        tui.move_focus_left();
-                    }
-                    KeyCode::Right => {
-                        tui.move_focus_right();
-                    }
-                    KeyCode::Up => {
-                        tui.scroll_memory_up();
-                    }
-                    KeyCode::Down => {
-                        tui.scroll_memory_down();
-                    }
-                    KeyCode::Tab => {
-                        tui.next_tab();
-                    }
-                    KeyCode::BackTab => {
-                        tui.previous_tab();
-                    }
-                    KeyCode::Enter => {
-                        match tui.get_focused_button() {
-                            0 => {
-                                // Step button
-                                sim.step();
-                            }
-                            1 => {
-                                // Run button
-                                sim.run();
-                            }
-                            2 => {
-                                // Reset button
-                                sim.reset();
-                                sim.load_program();
-                                tui.auto_focus_memory();
-                            }
-                            _ => {}
-                        }
-                    }
-                    KeyCode::Char('s') => {
-                        sim.step();
-                    }
-                    KeyCode::Char('r') => {
-                        sim.run();
-                    }
-                    KeyCode::Char('b') => {
-                        sim.add_breakpoint(sim.machine.reg_pc);
-                    }
-                    _ => {}
+        if event::poll(std::time::Duration::from_millis(100))?
+            && let Event::Key(key) = event::read()?
+        {
+            match key.code {
+                KeyCode::Char('q') => break,
+                KeyCode::Left => {
+                    tui.move_focus_left();
                 }
+                KeyCode::Right => {
+                    tui.move_focus_right();
+                }
+                KeyCode::Up => {
+                    tui.scroll_memory_up();
+                }
+                KeyCode::Down => {
+                    tui.scroll_memory_down();
+                }
+                KeyCode::Tab => {
+                    tui.next_tab();
+                }
+                KeyCode::BackTab => {
+                    tui.previous_tab();
+                }
+                KeyCode::Enter => {
+                    match tui.get_focused_button() {
+                        0 => {
+                            // Step button
+                            sim.step();
+                        }
+                        1 => {
+                            // Run button
+                            sim.run();
+                        }
+                        2 => {
+                            // Reset button
+                            sim.reset();
+                            sim.load_program();
+                            tui.auto_focus_memory();
+                        }
+                        _ => {}
+                    }
+                }
+                KeyCode::Char('s') => {
+                    sim.step();
+                }
+                KeyCode::Char('r') => {
+                    sim.run();
+                }
+                KeyCode::Char('b') => {
+                    sim.add_breakpoint(sim.machine.reg_pc);
+                }
+                _ => {}
             }
         }
     }

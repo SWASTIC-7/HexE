@@ -19,6 +19,12 @@ pub struct Machine {
     pub cc: i8, // Condition code (-1, 0, 1)
 }
 
+impl Default for Machine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Machine {
     pub fn new() -> Self {
         Machine {

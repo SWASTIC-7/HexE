@@ -105,7 +105,11 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                             locctr,
                             base_address,
                         );
-                        text_length += 3;
+
+                        // Check if format 3 was extended to format 4
+                        let actual_length = if obj_code.len() == 8 { 4 } else { 3 };
+
+                        text_length += actual_length;
                         if let ObjectRecord::Text {
                             length, objcodes, ..
                         } = &mut text
@@ -246,13 +250,13 @@ pub fn object_code3(
             let target_addr = sym.address;
             let program_counter = current_locctr + 3;
             let mut displacement = target_addr as i32 - program_counter as i32;
+
             if (-2048..=2047).contains(&displacement) {
                 flag_p = 1;
                 if flag_n == 0 && flag_i == 0 {
                     flag_i = 1;
                     flag_n = 1;
                 }
-                // No need to manually complement - casting handles it
                 let disp_12bit = (displacement & 0xFFF) as u16;
                 let first_byte: u8 = opcode | flag_n << 1 | flag_i;
                 let second_byte = (flag_x << 7)
@@ -282,8 +286,34 @@ pub fn object_code3(
 
                     return format!("{:02X}{:02X}{:02X}", first_byte, second_byte, third_byte);
                 } else {
-                    // Shift to format 4;
-                    // TODO: add the implementation of extending to format 4 if no base is set
+                    // Neither PC-relative nor base-relative works - extend to format 4
+                    log_warning(&format!(
+                        "Address {:06X} out of range for format 3, extending to format 4",
+                        target_addr
+                    ));
+
+                    // Set extended flag
+                    let flag_e_ext: u8 = 1;
+
+                    if flag_n == 0 && flag_i == 0 {
+                        flag_i = 1;
+                        flag_n = 1;
+                    }
+
+                    let addr_20bit = target_addr & 0xFFFFF; // 20-bit address
+                    let first_byte = opcode | (flag_n << 1) | flag_i;
+                    let second_byte = (flag_x << 7)
+                        | (0 << 6)
+                        | (0 << 5)
+                        | (flag_e_ext << 4)
+                        | ((addr_20bit >> 16) & 0x0F) as u8;
+                    let third_byte = ((addr_20bit >> 8) & 0xFF) as u8;
+                    let fourth_byte = (addr_20bit & 0xFF) as u8;
+
+                    return format!(
+                        "{:02X}{:02X}{:02X}{:02X}",
+                        first_byte, second_byte, third_byte, fourth_byte
+                    );
                 }
             }
         } else {
@@ -371,5 +401,5 @@ pub fn object_code4(
     }
     String::new()
 }
-
+//TODO: Update locctr when updating to format 4
 //TODO : add the feature of Literals support

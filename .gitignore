@@ -20,6 +20,7 @@ Thumbs.db
 
 # Logs
 simulator.log
+error.log
 logs/
 *.log
 
@@ -31,3 +32,11 @@ logs/
 # Coverage reports
 coverage/
 *.profraw
+
+# Test files
+*.o
+*.obj
+
+# Temporary files
+*~
+*.tmp

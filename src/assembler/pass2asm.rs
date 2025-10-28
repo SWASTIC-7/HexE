@@ -303,8 +303,6 @@ pub fn object_code3(
                     let addr_20bit = target_addr & 0xFFFFF; // 20-bit address
                     let first_byte = opcode | (flag_n << 1) | flag_i;
                     let second_byte = (flag_x << 7)
-                        | (0 << 6)
-                        | (0 << 5)
                         | (flag_e_ext << 4)
                         | ((addr_20bit >> 16) & 0x0F) as u8;
                     let third_byte = ((addr_20bit >> 8) & 0xFF) as u8;

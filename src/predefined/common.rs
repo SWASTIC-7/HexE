@@ -3,6 +3,7 @@ use once_cell::sync::Lazy;
 use std::sync::Mutex;
 pub static OBJECTPROGRAM: Lazy<Mutex<Vec<ObjectRecord>>> = Lazy::new(|| Mutex::new(vec![]));
 pub static SYMBOLTABLE: Lazy<Mutex<Vec<SymbolTable>>> = Lazy::new(|| Mutex::new(vec![]));
+pub static LITERALTABLE: Lazy<Mutex<Vec<LiteralTable>>> = Lazy::new(|| Mutex::new(vec![]));
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -107,4 +108,12 @@ pub struct DisAssembledToken {
     pub flags: Option<AddressFlags>,
     pub address: Option<u32>,
     pub reg: Option<Reg>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LiteralTable {
+    pub literal: String,      // e.g., "=C'EOF'"
+    pub value: String,        // e.g., "454F46" (hex)
+    pub length: u32,          // Length in bytes
+    pub address: Option<u32>, // Address assigned in Pass 2
 }

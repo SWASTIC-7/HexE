@@ -1,9 +1,11 @@
 use super::pass1asm::pass1asm;
 use crate::error::{log_error, log_info, log_warning};
 use crate::predefined::common::{
-    Command, LabeledParsedLines, OBJECTPROGRAM, ObjectRecord, SymbolTable,
+    Command, LITERALTABLE, LabeledParsedLines, OBJECTPROGRAM, ObjectRecord, SymbolTable,
 };
 use crate::predefined::registers;
+
+// pass 2 creates the object program
 
 pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
     let (labeled_parsed_lines, len, start_addr, symbol_table): (
@@ -13,6 +15,7 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
         Vec<SymbolTable>,
     ) = pass1asm(buffer);
     let mut object_program = OBJECTPROGRAM.lock().unwrap();
+    let literal_table = LITERALTABLE.lock().unwrap();
     let mut base_address = start_addr;
     let mut text_length = 0;
     let mut text = ObjectRecord::Text {
@@ -42,22 +45,64 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                         base_address = sym.address;
                     }
                 }
-                "END" => {
-                    // Add final text record if it has content
-                    if text_length > 0 {
-                        if let ObjectRecord::Text { length, .. } = &mut text {
-                            *length = text_length;
+                "LTORG" | "END" => {
+                    // Generate object code for literals at this location
+                    let literals_at_this_location: Vec<_> = literal_table
+                        .iter()
+                        .filter(|lit| lit.address == Some(lines.locctr))
+                        .collect();
+
+                    if !literals_at_this_location.is_empty() {
+                        log_info(&format!(
+                            "Generating object code for {} literals at {:06X}",
+                            literals_at_this_location.len(),
+                            lines.locctr
+                        ));
+
+                        for lit in literals_at_this_location {
+                            // Add literal data to text record
+                            text_length += lit.length as u8;
+                            if let ObjectRecord::Text {
+                                length, objcodes, ..
+                            } = &mut text
+                            {
+                                *length = text_length;
+                                objcodes.push(lit.value.clone());
+                                log_info(&format!(
+                                    "  Added literal {} = {} (length: {})",
+                                    lit.literal, lit.value, lit.length
+                                ));
+                            }
+
+                            if text_length >= 55 {
+                                text_length = 0;
+                                object_program.push(text.clone());
+                                text = ObjectRecord::Text {
+                                    start: lines.locctr + lit.length,
+                                    length: 0,
+                                    objcodes: Vec::new(),
+                                };
+                            }
                         }
-                        object_program.push(text.clone());
                     }
 
-                    // Add all modification records before END record
-                    for mod_record in modification_records.iter() {
-                        object_program.push(mod_record.clone());
-                    }
+                    if directive.to_uppercase() == "END" {
+                        // Add final text record if it has content
+                        if text_length > 0 {
+                            if let ObjectRecord::Text { length, .. } = &mut text {
+                                *length = text_length;
+                            }
+                            object_program.push(text.clone());
+                        }
 
-                    // Add END record
-                    object_program.push(ObjectRecord::End { start: start_addr });
+                        // Add all modification records before END record
+                        for mod_record in modification_records.iter() {
+                            object_program.push(mod_record.clone());
+                        }
+
+                        // Add END record
+                        object_program.push(ObjectRecord::End { start: start_addr });
+                    }
                 }
                 _ => {
                     log_warning(&format!("Unknown directive: {}", directive));
@@ -109,6 +154,7 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                             &lines.parsedtoken.operand1.clone(),
                             &lines.parsedtoken.operand2.clone(),
                             &symbol_table,
+                            &literal_table,
                             locctr,
                             base_address,
                         );
@@ -150,6 +196,7 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                             &lines.parsedtoken.operand1.clone(),
                             &lines.parsedtoken.operand2.clone(),
                             &symbol_table,
+                            &literal_table,
                             locctr,
                         );
 
@@ -189,17 +236,6 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
         }
     }
 
-    //Add any remaining text record at the end
-    // if text_length > 0 {
-    //     if let ObjectRecord::Text { length, .. } = &mut text {
-    //         *length = text_length;
-    //     }
-    //     object_program.push(text.clone());
-    // }
-
-    // for items in object_program.iter() {
-    //     println!("{items:?}");
-    // }
     object_program.to_vec()
 }
 
@@ -253,6 +289,7 @@ pub fn object_code3(
     operand1: &Option<String>,
     operand2: &Option<String>,
     symbol_table: &[SymbolTable],
+    literal_table: &[crate::predefined::common::LiteralTable],
     current_locctr: u32,
     base_address: u32,
 ) -> String {
@@ -273,6 +310,84 @@ pub fn object_code3(
     }
     if let Some(opr) = operand1 {
         let mut operand = opr.clone();
+
+        // Check if operand is a literal
+        if let Some(stripped) = opr.strip_prefix('=') {
+            // It's a literal - look it up in literal table
+            if let Some(lit) = literal_table.iter().find(|l| l.literal == *opr) {
+                if let Some(lit_addr) = lit.address {
+                    log_info(&format!(
+                        "Using literal {} at address {:06X}",
+                        opr, lit_addr
+                    ));
+
+                    // Use literal address for displacement calculation
+                    let target_addr = lit_addr;
+                    let program_counter = current_locctr + 3;
+                    let mut displacement = target_addr as i32 - program_counter as i32;
+
+                    // Simple addressing (n=1, i=1)
+                    flag_n = 1;
+                    flag_i = 1;
+
+                    if (-2048..=2047).contains(&displacement) {
+                        flag_p = 1;
+                        let disp_12bit = (displacement & 0xFFF) as u16;
+                        let first_byte: u8 = opcode | flag_n << 1 | flag_i;
+                        let second_byte = (flag_x << 7)
+                            | (flag_b << 6)
+                            | (flag_p << 5)
+                            | (flag_e << 4)
+                            | ((disp_12bit >> 8) & 0x0F) as u8;
+                        let third_byte = (disp_12bit & 0xFF) as u8;
+
+                        return format!("{:02X}{:02X}{:02X}", first_byte, second_byte, third_byte);
+                    } else {
+                        // Try base-relative
+                        displacement =
+                            target_addr as i32 - base_address as i32 + program_counter as i32;
+                        if (0..=4095).contains(&displacement) {
+                            flag_b = 1;
+                            let disp_12bit = (displacement & 0xFFF) as u16;
+                            let first_byte: u8 = opcode | flag_n << 1 | flag_i;
+                            let second_byte = (flag_x << 7)
+                                | (flag_b << 6)
+                                | (flag_p << 5)
+                                | (flag_e << 4)
+                                | ((disp_12bit >> 8) & 0x0F) as u8;
+                            let third_byte = (disp_12bit & 0xFF) as u8;
+
+                            return format!(
+                                "{:02X}{:02X}{:02X}",
+                                first_byte, second_byte, third_byte
+                            );
+                        } else {
+                            // Extend to format 4
+                            log_warning(&format!(
+                                "Literal {} address {:06X} out of range for format 3, extending to format 4",
+                                opr, target_addr
+                            ));
+                            return object_code4(
+                                opcode,
+                                operand1,
+                                operand2,
+                                symbol_table,
+                                literal_table,
+                                current_locctr,
+                            );
+                        }
+                    }
+                } else {
+                    log_warning(&format!("Literal {} has no assigned address", opr));
+                    return String::new();
+                }
+            } else {
+                log_warning(&format!("Literal {} not found in literal table", opr));
+                return String::new();
+            }
+        }
+
+        // Not a literal - handle as regular operand
         if let Some(stripped) = opr.strip_prefix('#') {
             flag_i = 1;
             operand = stripped.to_string();
@@ -327,7 +442,14 @@ pub fn object_code3(
                         target_addr
                     ));
                     //TODO: update locctr  --- chicken egg problem
-                    return object_code4(opcode, operand1, operand2, symbol_table, current_locctr);
+                    return object_code4(
+                        opcode,
+                        operand1,
+                        operand2,
+                        symbol_table,
+                        literal_table,
+                        current_locctr,
+                    );
                 }
             }
         } else {
@@ -358,6 +480,7 @@ pub fn object_code4(
     operand1: &Option<String>,
     operand2: &Option<String>,
     symbol_table: &[SymbolTable],
+    literal_table: &[crate::predefined::common::LiteralTable],
     _current_locctr: u32,
 ) -> String {
     let mut flag_n: u8 = 0;
@@ -377,6 +500,46 @@ pub fn object_code4(
     }
     if let Some(opr) = operand1 {
         let mut operand = opr.clone();
+
+        // Check if operand is a literal
+        if let Some(stripped) = opr.strip_prefix('=') {
+            if let Some(lit) = literal_table.iter().find(|l| l.literal == *opr) {
+                if let Some(lit_addr) = lit.address {
+                    log_info(&format!(
+                        "Using literal {} at address {:06X} in format 4",
+                        opr, lit_addr
+                    ));
+
+                    let addr_20bit = lit_addr & 0xFFFFF;
+
+                    // Simple addressing (n=1, i=1)
+                    flag_n = 1;
+                    flag_i = 1;
+
+                    let first_byte = opcode | (flag_n << 1) | flag_i;
+                    let second_byte = (flag_x << 7)
+                        | (flag_b << 6)
+                        | (flag_p << 5)
+                        | (flag_e << 4)
+                        | ((addr_20bit >> 16) & 0x0F) as u8;
+                    let third_byte = ((addr_20bit >> 8) & 0xFF) as u8;
+                    let fourth_byte = (addr_20bit & 0xFF) as u8;
+
+                    return format!(
+                        "{:02X}{:02X}{:02X}{:02X}",
+                        first_byte, second_byte, third_byte, fourth_byte
+                    );
+                } else {
+                    log_warning(&format!("Literal {} has no assigned address", opr));
+                    return String::new();
+                }
+            } else {
+                log_warning(&format!("Literal {} not found in literal table", opr));
+                return String::new();
+            }
+        }
+
+        // Handle regular operands
         if let Some(stripped) = opr.strip_prefix('#') {
             flag_i = 1;
             operand = stripped.to_string();

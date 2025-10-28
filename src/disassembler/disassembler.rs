@@ -6,12 +6,19 @@ use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
 use hex;
 
+/// Notes point to remember:::--->
+
+// if n=0 and i=1 or n=1 and i=0, then x = 0 always
+// if n=0 and i=0 or n=1 and i=1 simple addressing
+// if n=0 and i=0 then bpe is use in address feild
+
 pub fn disassemble() -> Vec<DisAssembledToken> {
     log_info("Starting disassembly process");
 
     let mut starting_addr = 0u32;
     let mut locctr: u32;
     let mut parsed_dissassembled_code: Vec<DisAssembledToken> = Vec::new();
+    let mut modification_addresses: Vec<(u32, u8)> = Vec::new();
 
     for lines in OBJECTPROGRAM.lock().unwrap().iter() {
         match lines {
@@ -206,6 +213,21 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 let end_start_addr = *start;
                 if end_start_addr == starting_addr {
                     log_info("File disassembled successfully");
+
+                    // Log modification records
+                    if !modification_addresses.is_empty() {
+                        log_info(&format!(
+                            "Found {} modification records",
+                            modification_addresses.len()
+                        ));
+                        for (addr, len) in &modification_addresses {
+                            log_info(&format!(
+                                "  Modification at {:06X}, length: {} half-bytes",
+                                addr, len
+                            ));
+                        }
+                    }
+
                     break;
                 } else {
                     log_error(&format!(
@@ -214,11 +236,17 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                     ));
                 }
             }
-            ObjectRecord::Modification { address, length } => {
-                log_info(&format!(
-                    "Modification record found at address {:06X}, length: {}",
-                    address, length
-                ));
+            ObjectRecord::Modification {
+                address,
+                length,
+                sign,
+                variable,
+            } => {
+                // modification_addresses.push((*address, *length));
+                // log_info(&format!(
+                //     "Modification record at address {:06X}, length: {} half-bytes (modifying {} bits)",
+                //     address, length, length * 4
+                // ));
             }
         }
     }

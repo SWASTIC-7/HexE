@@ -1,5 +1,5 @@
 use super::pass1asm::pass1asm;
-use crate::error::{log_error, log_warning};
+use crate::error::{log_error, log_info, log_warning};
 use crate::predefined::common::{
     Command, LabeledParsedLines, OBJECTPROGRAM, ObjectRecord, SymbolTable,
 };
@@ -20,6 +20,8 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
         length: 0,
         objcodes: Vec::new(),
     };
+    let mut modification_records: Vec<ObjectRecord> = Vec::new();
+
     for lines in labeled_parsed_lines.iter() {
         if text_length == 0 {
             text = ObjectRecord::Text {
@@ -32,7 +34,6 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
             Command::Directive(directive) => match directive.to_uppercase().as_str() {
                 "START" => {
                     let prog_name = lines.parsedtoken.label.clone();
-
                     object_program.push(header_record(prog_name, len, start_addr))
                 }
                 "BASE" => {
@@ -49,6 +50,12 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                         }
                         object_program.push(text.clone());
                     }
+
+                    // Add all modification records before END record
+                    for mod_record in modification_records.iter() {
+                        object_program.push(mod_record.clone());
+                    }
+
                     // Add END record
                     object_program.push(ObjectRecord::End { start: start_addr });
                 }
@@ -107,7 +114,22 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                         );
 
                         // Check if format 3 was extended to format 4
-                        let actual_length = if obj_code.len() == 8 { 4 } else { 3 };
+                        let actual_length = if obj_code.len() == 8 {
+                            // Extended to format 4 - add modification record
+                            log_info(&format!(
+                                "Format 3 at {:06X} extended to format 4, adding modification record",
+                                locctr
+                            ));
+
+                            // Modification record: address + 1 (skip opcode byte), modify 5 half-bytes (20 bits)
+                            modification_records.push(make_modification_record(
+                                locctr,
+                                &lines.parsedtoken.operand1,
+                            ));
+                            4
+                        } else {
+                            3
+                        };
 
                         text_length += actual_length;
                         if let ObjectRecord::Text {
@@ -130,6 +152,19 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                             &symbol_table,
                             locctr,
                         );
+
+                        // Format 4 instruction - add modification record
+                        log_info(&format!(
+                            "Format 4 instruction at {:06X}, adding modification record",
+                            locctr
+                        ));
+
+                        // Modification record: address + 1 (skip opcode byte), modify 5 half-bytes (20 bits)
+                        modification_records.push(make_modification_record(
+                            locctr,
+                            &lines.parsedtoken.operand1,
+                        ));
+
                         text_length += 4;
                         if let ObjectRecord::Text {
                             length, objcodes, ..
@@ -291,27 +326,8 @@ pub fn object_code3(
                         "Address {:06X} out of range for format 3, extending to format 4",
                         target_addr
                     ));
-
-                    // Set extended flag
-                    let flag_e_ext: u8 = 1;
-
-                    if flag_n == 0 && flag_i == 0 {
-                        flag_i = 1;
-                        flag_n = 1;
-                    }
-
-                    let addr_20bit = target_addr & 0xFFFFF; // 20-bit address
-                    let first_byte = opcode | (flag_n << 1) | flag_i;
-                    let second_byte = (flag_x << 7)
-                        | (flag_e_ext << 4)
-                        | ((addr_20bit >> 16) & 0x0F) as u8;
-                    let third_byte = ((addr_20bit >> 8) & 0xFF) as u8;
-                    let fourth_byte = (addr_20bit & 0xFF) as u8;
-
-                    return format!(
-                        "{:02X}{:02X}{:02X}{:02X}",
-                        first_byte, second_byte, third_byte, fourth_byte
-                    );
+                    //TODO: update locctr  --- chicken egg problem
+                    return object_code4(opcode, operand1, operand2, symbol_table, current_locctr);
                 }
             }
         } else {
@@ -399,5 +415,13 @@ pub fn object_code4(
     }
     String::new()
 }
-//TODO: Update locctr when updating to format 4
+
+pub fn make_modification_record(current_locctr: u32, operand1: &Option<String>) -> ObjectRecord {
+    return ObjectRecord::Modification {
+        address: current_locctr + 1,
+        length: 5,
+        sign: true,
+        variable: operand1.clone().unwrap_or_default(),
+    };
+}
 //TODO : add the feature of Literals support

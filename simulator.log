@@ -419,3 +419,110 @@ SystemTime { tv_sec: 1761654173, tv_nsec: 49494404 }: INFO - Program starts at: 
 SystemTime { tv_sec: 1761654173, tv_nsec: 49499520 }: INFO - Loaded 5 instructions
 SystemTime { tv_sec: 1761654173, tv_nsec: 456808366 }: INFO - TUI simulator shut down successfully
 SystemTime { tv_sec: 1761654173, tv_nsec: 457059177 }: INFO - HexE Simulator finished
+SystemTime { tv_sec: 1761670696, tv_nsec: 737888762 }: INFO - HexE Simulator started
+SystemTime { tv_sec: 1761670696, tv_nsec: 738744212 }: INFO - Assembling source file
+SystemTime { tv_sec: 1761670696, tv_nsec: 739338063 }: WARNING - Incorrect register 'immediate' in indexed mode
+SystemTime { tv_sec: 1761670696, tv_nsec: 739346758 }: WARNING - Symbol '10' not found in symbol table, treating as immediate value
+SystemTime { tv_sec: 1761670696, tv_nsec: 739365067 }: WARNING - Incorrect register 'indirect' in indexed mode
+SystemTime { tv_sec: 1761670696, tv_nsec: 739375135 }: WARNING - Symbol '5' not found in symbol table, treating as immediate value
+SystemTime { tv_sec: 1761670696, tv_nsec: 739389969 }: WARNING - Unknown directive: WORD
+SystemTime { tv_sec: 1761670696, tv_nsec: 739393914 }: WARNING - Unknown directive: RESW
+SystemTime { tv_sec: 1761670696, tv_nsec: 739400822 }: INFO - Starting TUI simulator
+SystemTime { tv_sec: 1761670696, tv_nsec: 739629175 }: INFO - Starting disassembly process
+SystemTime { tv_sec: 1761670696, tv_nsec: 739635395 }: INFO - Program: TEST3, Start: 0007D0, Length: 000015
+SystemTime { tv_sec: 1761670696, tv_nsec: 739640038 }: INFO - Text section at 0007D0, length: 0F
+SystemTime { tv_sec: 1761670696, tv_nsec: 739836265 }: INFO - File disassembled successfully
+SystemTime { tv_sec: 1761670696, tv_nsec: 739841321 }: INFO - Disassembly completed: 5 instructions
+SystemTime { tv_sec: 1761670696, tv_nsec: 739844953 }: INFO - === DISASSEMBLED PROGRAM ===
+SystemTime { tv_sec: 1761670696, tv_nsec: 739856712 }: INFO - 0007D0  LDA      #10
+SystemTime { tv_sec: 1761670696, tv_nsec: 739861186 }: INFO - 0007D3  STA      000009 [PC-rel]
+SystemTime { tv_sec: 1761670696, tv_nsec: 739865299 }: INFO - 0007D6  LDA      @000006 [PC-rel]
+SystemTime { tv_sec: 1761670696, tv_nsec: 739871405 }: INFO - 0007D9  ADD      #5
+SystemTime { tv_sec: 1761670696, tv_nsec: 739875583 }: INFO - 0007DC  STA      000003 [PC-rel]
+SystemTime { tv_sec: 1761670696, tv_nsec: 739879395 }: INFO - Program starts at: 0007D0
+SystemTime { tv_sec: 1761670696, tv_nsec: 739882912 }: INFO - Loaded 5 instructions
+SystemTime { tv_sec: 1761671934, tv_nsec: 378762268 }: INFO - TUI simulator shut down successfully
+SystemTime { tv_sec: 1761671934, tv_nsec: 379195486 }: INFO - Starting disassembly process
+SystemTime { tv_sec: 1761671934, tv_nsec: 379220759 }: INFO - Program: TEST3, Start: 0007D0, Length: 000015
+SystemTime { tv_sec: 1761671934, tv_nsec: 379231675 }: INFO - Text section at 0007D0, length: 0F
+SystemTime { tv_sec: 1761671934, tv_nsec: 379666582 }: INFO - File disassembled successfully
+SystemTime { tv_sec: 1761671934, tv_nsec: 379679756 }: INFO - Disassembly completed: 5 instructions
+SystemTime { tv_sec: 1761671934, tv_nsec: 379687304 }: INFO - === DISASSEMBLED PROGRAM ===
+SystemTime { tv_sec: 1761671934, tv_nsec: 379701187 }: INFO - 0007D0  LDA      #10
+SystemTime { tv_sec: 1761671934, tv_nsec: 379711017 }: INFO - 0007D3  STA      000009 [PC-rel]
+SystemTime { tv_sec: 1761671934, tv_nsec: 379720450 }: INFO - 0007D6  LDA      @000006 [PC-rel]
+SystemTime { tv_sec: 1761671934, tv_nsec: 379729555 }: INFO - 0007D9  ADD      #5
+SystemTime { tv_sec: 1761671934, tv_nsec: 379737905 }: INFO - 0007DC  STA      000003 [PC-rel]
+SystemTime { tv_sec: 1761671934, tv_nsec: 379745920 }: INFO - Program starts at: 0007D0
+SystemTime { tv_sec: 1761671934, tv_nsec: 379753533 }: INFO - Loaded 5 instructions
+SystemTime { tv_sec: 1761671934, tv_nsec: 379850581 }: INFO - Starting TUI simulator
+SystemTime { tv_sec: 1761671934, tv_nsec: 380213517 }: INFO - Starting disassembly process
+SystemTime { tv_sec: 1761671934, tv_nsec: 380227881 }: INFO - Program: TEST3, Start: 0007D0, Length: 000015
+SystemTime { tv_sec: 1761671934, tv_nsec: 380235085 }: INFO - Text section at 0007D0, length: 0F
+SystemTime { tv_sec: 1761671934, tv_nsec: 380589642 }: INFO - File disassembled successfully
+SystemTime { tv_sec: 1761671934, tv_nsec: 380599024 }: INFO - Disassembly completed: 5 instructions
+SystemTime { tv_sec: 1761671934, tv_nsec: 380605395 }: INFO - === DISASSEMBLED PROGRAM ===
+SystemTime { tv_sec: 1761671934, tv_nsec: 380613825 }: INFO - 0007D0  LDA      #10
+SystemTime { tv_sec: 1761671934, tv_nsec: 380621573 }: INFO - 0007D3  STA      000009 [PC-rel]
+SystemTime { tv_sec: 1761671934, tv_nsec: 380629408 }: INFO - 0007D6  LDA      @000006 [PC-rel]
+SystemTime { tv_sec: 1761671934, tv_nsec: 380637090 }: INFO - 0007D9  ADD      #5
+SystemTime { tv_sec: 1761671934, tv_nsec: 380644580 }: INFO - 0007DC  STA      000003 [PC-rel]
+SystemTime { tv_sec: 1761671934, tv_nsec: 380651701 }: INFO - Program starts at: 0007D0
+SystemTime { tv_sec: 1761671934, tv_nsec: 380658412 }: INFO - Loaded 5 instructions
+SystemTime { tv_sec: 1761671935, tv_nsec: 485350470 }: INFO - TUI simulator shut down successfully
+SystemTime { tv_sec: 1761671935, tv_nsec: 485492838 }: INFO - HexE Simulator finished
+SystemTime { tv_sec: 1761681254, tv_nsec: 331415144 }: INFO - HexE Simulator started
+SystemTime { tv_sec: 1761681254, tv_nsec: 331495622 }: INFO - Assembling source file
+SystemTime { tv_sec: 1761681254, tv_nsec: 331850235 }: WARNING - Incorrect register 'immediate' in indexed mode
+SystemTime { tv_sec: 1761681254, tv_nsec: 331855234 }: WARNING - Symbol '10' not found in symbol table, treating as immediate value
+SystemTime { tv_sec: 1761681254, tv_nsec: 331869737 }: WARNING - Incorrect register 'indirect' in indexed mode
+SystemTime { tv_sec: 1761681254, tv_nsec: 331878183 }: WARNING - Symbol '5' not found in symbol table, treating as immediate value
+SystemTime { tv_sec: 1761681254, tv_nsec: 331892027 }: WARNING - Unknown directive: WORD
+SystemTime { tv_sec: 1761681254, tv_nsec: 331899313 }: WARNING - Unknown directive: RESW
+SystemTime { tv_sec: 1761681254, tv_nsec: 331905288 }: INFO - Starting TUI simulator
+SystemTime { tv_sec: 1761681254, tv_nsec: 332049104 }: INFO - Starting disassembly process
+SystemTime { tv_sec: 1761681254, tv_nsec: 332053010 }: INFO - Program: TEST3, Start: 0007D0, Length: 000015
+SystemTime { tv_sec: 1761681254, tv_nsec: 332055867 }: INFO - Text section at 0007D0, length: 0F
+SystemTime { tv_sec: 1761681254, tv_nsec: 332170643 }: INFO - File disassembled successfully
+SystemTime { tv_sec: 1761681254, tv_nsec: 332173244 }: INFO - Disassembly completed: 5 instructions
+SystemTime { tv_sec: 1761681254, tv_nsec: 332175858 }: INFO - === DISASSEMBLED PROGRAM ===
+SystemTime { tv_sec: 1761681254, tv_nsec: 332180875 }: INFO - 0007D0  LDA      #10
+SystemTime { tv_sec: 1761681254, tv_nsec: 332184805 }: INFO - 0007D3  STA      000009 [PC-rel]
+SystemTime { tv_sec: 1761681254, tv_nsec: 332188528 }: INFO - 0007D6  LDA      @000006 [PC-rel]
+SystemTime { tv_sec: 1761681254, tv_nsec: 332191891 }: INFO - 0007D9  ADD      #5
+SystemTime { tv_sec: 1761681254, tv_nsec: 332195293 }: INFO - 0007DC  STA      000003 [PC-rel]
+SystemTime { tv_sec: 1761681254, tv_nsec: 332198486 }: INFO - Program starts at: 0007D0
+SystemTime { tv_sec: 1761681254, tv_nsec: 332201465 }: INFO - Loaded 5 instructions
+SystemTime { tv_sec: 1761681258, tv_nsec: 968445108 }: INFO - TUI simulator shut down successfully
+SystemTime { tv_sec: 1761681258, tv_nsec: 968646822 }: INFO - Starting disassembly process
+SystemTime { tv_sec: 1761681258, tv_nsec: 968665978 }: INFO - Program: TEST3, Start: 0007D0, Length: 000015
+SystemTime { tv_sec: 1761681258, tv_nsec: 968674672 }: INFO - Text section at 0007D0, length: 0F
+SystemTime { tv_sec: 1761681258, tv_nsec: 969285938 }: INFO - File disassembled successfully
+SystemTime { tv_sec: 1761681258, tv_nsec: 969293757 }: INFO - Disassembly completed: 5 instructions
+SystemTime { tv_sec: 1761681258, tv_nsec: 969299335 }: INFO - === DISASSEMBLED PROGRAM ===
+SystemTime { tv_sec: 1761681258, tv_nsec: 969311421 }: INFO - 0007D0  LDA      #10
+SystemTime { tv_sec: 1761681258, tv_nsec: 969318932 }: INFO - 0007D3  STA      000009 [PC-rel]
+SystemTime { tv_sec: 1761681258, tv_nsec: 969325693 }: INFO - 0007D6  LDA      @000006 [PC-rel]
+SystemTime { tv_sec: 1761681258, tv_nsec: 969332230 }: INFO - 0007D9  ADD      #5
+SystemTime { tv_sec: 1761681258, tv_nsec: 969338580 }: INFO - 0007DC  STA      000003 [PC-rel]
+SystemTime { tv_sec: 1761681258, tv_nsec: 969344783 }: INFO - Program starts at: 0007D0
+SystemTime { tv_sec: 1761681258, tv_nsec: 969350742 }: INFO - Loaded 5 instructions
+SystemTime { tv_sec: 1761681258, tv_nsec: 969434831 }: INFO - Starting TUI simulator
+SystemTime { tv_sec: 1761681258, tv_nsec: 969893960 }: INFO - Starting disassembly process
+SystemTime { tv_sec: 1761681258, tv_nsec: 969903902 }: INFO - Program: TEST3, Start: 0007D0, Length: 000015
+SystemTime { tv_sec: 1761681258, tv_nsec: 969909357 }: INFO - Text section at 0007D0, length: 0F
+SystemTime { tv_sec: 1761681258, tv_nsec: 970219219 }: INFO - File disassembled successfully
+SystemTime { tv_sec: 1761681258, tv_nsec: 970226271 }: INFO - Disassembly completed: 5 instructions
+SystemTime { tv_sec: 1761681258, tv_nsec: 970231100 }: INFO - === DISASSEMBLED PROGRAM ===
+SystemTime { tv_sec: 1761681258, tv_nsec: 970238042 }: INFO - 0007D0  LDA      #10
+SystemTime { tv_sec: 1761681258, tv_nsec: 970244100 }: INFO - 0007D3  STA      000009 [PC-rel]
+SystemTime { tv_sec: 1761681258, tv_nsec: 970250197 }: INFO - 0007D6  LDA      @000006 [PC-rel]
+SystemTime { tv_sec: 1761681258, tv_nsec: 970255836 }: INFO - 0007D9  ADD      #5
+SystemTime { tv_sec: 1761681258, tv_nsec: 970261648 }: INFO - 0007DC  STA      000003 [PC-rel]
+SystemTime { tv_sec: 1761681258, tv_nsec: 970267899 }: INFO - Program starts at: 0007D0
+SystemTime { tv_sec: 1761681258, tv_nsec: 970272962 }: INFO - Loaded 5 instructions
+SystemTime { tv_sec: 1761681260, tv_nsec: 11017953 }: INFO - TUI simulator shut down successfully
+SystemTime { tv_sec: 1761681260, tv_nsec: 11086466 }: INFO - HexE Simulator finished
+SystemTime { tv_sec: 1761681264, tv_nsec: 327995204 }: INFO - HexE Simulator started
+SystemTime { tv_sec: 1761681264, tv_nsec: 328052676 }: INFO - Assembling source file
+SystemTime { tv_sec: 1761681264, tv_nsec: 328332605 }: WARNING - Symbol '=C'EOF'' not found in symbol table, treating as immediate value

@@ -1,4 +1,4 @@
-use crate::error::log_warning;
+use crate::error::{log_info, log_warning};
 use crate::predefined::common::{OBJECTPROGRAM, ObjectRecord};
 use crate::predefined::opcode::get_instruction_format;
 
@@ -150,6 +150,28 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
 
                 let parsed_obj = ObjectRecord::End { start: start_addr };
                 parsed_obj_prog.push(parsed_obj);
+            }
+            'M' => {
+                //TODO: implement properly
+                // Modification record: M + 6char address + 2char length (half-bytes) + sign(1bit) + variable
+                if record.len() < 8 {
+                    log_warning("Invalid modification record: too short");
+                    continue;
+                }
+
+                let addr_hex = &record[0..6];
+                let length_hex = &record[6..8];
+
+                let address = u32::from_str_radix(addr_hex, 16).unwrap_or(0);
+                let length = u8::from_str_radix(length_hex, 16).unwrap_or(0);
+
+                log_info(&format!(
+                    "Loaded modification record: address {:06X}, length {} half-bytes",
+                    address, length
+                ));
+
+                // let parsed_obj = ObjectRecord::Modification { address, length};
+                // parsed_obj_prog.push(parsed_obj);
             }
             _ => {
                 log_warning(&format!("Unknown record type: {}", record_header));

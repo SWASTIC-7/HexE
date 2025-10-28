@@ -20,6 +20,8 @@ pub enum ObjectRecord {
     Modification {
         address: u32,
         length: u8,
+        sign: bool, // true == + && false == -
+        variable: String,
     },
     End {
         start: u32,

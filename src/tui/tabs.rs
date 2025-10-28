@@ -91,8 +91,13 @@ impl TabsWidget {
                     ObjectRecord::End { start } => {
                         format!("E  {:06X}", start)
                     }
-                    ObjectRecord::Modification { address, length } => {
-                        format!("M  {:06X}  {:02}", address, length)
+                    ObjectRecord::Modification {
+                        address,
+                        length,
+                        sign,
+                        variable,
+                    } => {
+                        format!("M  {:06X}  {:02} {:01} {}", address, length, sign, variable)
                     }
                 };
                 ListItem::new(text)

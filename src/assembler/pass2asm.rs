@@ -309,7 +309,7 @@ pub fn object_code3(
     if let Some(opr) = operand1 {
         let mut operand = opr.clone();
 
-        if let Some(stripped) = opr.strip_prefix('=') {
+        if let Some(_stripped) = opr.strip_prefix('=') {
             if let Some(lit) = literal_table.iter().find(|l| l.literal == *opr) {
                 if let Some(lit_addr) = lit.address {
                     log_info(&format!(
@@ -495,7 +495,7 @@ pub fn object_code4(
         let mut operand = opr.clone();
 
         // Check if operand is a literal
-        if let Some(stripped) = opr.strip_prefix('=') {
+        if let Some(_stripped) = opr.strip_prefix('=') {
             if let Some(lit) = literal_table.iter().find(|l| l.literal == *opr) {
                 if let Some(lit_addr) = lit.address {
                     log_info(&format!(
@@ -572,11 +572,11 @@ pub fn object_code4(
 }
 
 pub fn make_modification_record(current_locctr: u32, operand1: &Option<String>) -> ObjectRecord {
-    return ObjectRecord::Modification {
+    ObjectRecord::Modification {
         address: current_locctr + 1,
         length: 5,
         sign: true,
         variable: operand1.clone().unwrap_or_default(),
-    };
+    }
 }
 //TODO : add the feature of Literals support

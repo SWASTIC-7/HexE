@@ -6,7 +6,7 @@ use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
 use hex;
 
-/// Notes point to remember:::--->
+// Notes point to remember:::--->
 
 // if n=0 and i=1 or n=1 and i=0, then x = 0 always
 // if n=0 and i=0 or n=1 and i=1 simple addressing
@@ -18,7 +18,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
     let mut starting_addr = 0u32;
     let mut locctr: u32;
     let mut parsed_dissassembled_code: Vec<DisAssembledToken> = Vec::new();
-    let mut modification_addresses: Vec<(u32, u8)> = Vec::new();
+    let modification_addresses: Vec<(u32, u8)> = Vec::new();
 
     for lines in OBJECTPROGRAM.lock().unwrap().iter() {
         match lines {
@@ -237,10 +237,10 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 }
             }
             ObjectRecord::Modification {
-                address,
-                length,
-                sign,
-                variable,
+                address: _,
+                length: _,
+                sign: _,
+                variable: _,
             } => {
                 // modification_addresses.push((*address, *length));
                 // log_info(&format!(

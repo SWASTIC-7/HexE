@@ -15,11 +15,11 @@ fn parse_literal(literal: &str) -> Option<(String, u32)> {
                 let length = content.len() as u32;
                 return Some((hex_value, length));
             }
-        } else if let Some(hex_lit) = stripped.strip_prefix("X'") {
-            if let Some(content) = hex_lit.strip_suffix('\'') {
-                let length = (content.len() / 2) as u32;
-                return Some((content.to_uppercase(), length));
-            }
+        } else if let Some(hex_lit) = stripped.strip_prefix("X'")
+            && let Some(content) = hex_lit.strip_suffix('\'')
+        {
+            let length = (content.len() / 2) as u32;
+            return Some((content.to_uppercase(), length));
         }
     }
     None
@@ -50,26 +50,26 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
             Command::Instruction(instr) => {
                 if locctr != 0x9999999 {
                     // Check if operand is a literal
-                    if let Some(operand) = &lines.operand1 {
-                        if is_literal(operand) {
-                            // Add to literal table if not already present
-                            if !literal_table.iter().any(|lit| lit.literal == *operand)
-                                && !pending_literals.contains(operand)
-                            {
-                                pending_literals.push(operand.clone());
+                    if let Some(operand) = &lines.operand1
+                        && is_literal(operand)
+                    {
+                        // Add to literal table if not already present
+                        if !literal_table.iter().any(|lit| lit.literal == *operand)
+                            && !pending_literals.contains(operand)
+                        {
+                            pending_literals.push(operand.clone());
 
-                                if let Some((value, lit_length)) = parse_literal(operand) {
-                                    literal_table.push(LiteralTable {
-                                        literal: operand.clone(),
-                                        value,
-                                        length: lit_length,
-                                        address: None,
-                                    });
-                                    log_info(&format!(
-                                        "Found literal: {} (length: {} bytes)",
-                                        operand, lit_length
-                                    ));
-                                }
+                            if let Some((value, lit_length)) = parse_literal(operand) {
+                                literal_table.push(LiteralTable {
+                                    literal: operand.clone(),
+                                    value,
+                                    length: lit_length,
+                                    address: None,
+                                });
+                                log_info(&format!(
+                                    "Found literal: {} (length: {} bytes)",
+                                    operand, lit_length
+                                ));
                             }
                         }
                     }

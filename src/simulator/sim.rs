@@ -4,7 +4,8 @@ use super::{name_to_opcode, register_name_to_code};
 use crate::disassembler::disassembler;
 use crate::error::{log_error, log_info};
 use crate::predefined::common::{
-    AddressFlags, Command, DisAssembledToken, OBJECTPROGRAM, ObjectRecord, SYMBOLTABLE,
+    AddressFlags, Command, DisAssembledToken, LITERALTABLE, OBJECTPROGRAM, ObjectRecord,
+    SYMBOLTABLE,
 };
 use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
@@ -341,6 +342,9 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
 
     let symbol_table = SYMBOLTABLE.lock().unwrap().clone();
     tui.update_symbol_table(symbol_table);
+
+    let literal_table = LITERALTABLE.lock().unwrap().clone();
+    tui.update_literal_table(literal_table);
 
     // Auto-focus memory on the object code location
     tui.auto_focus_memory();

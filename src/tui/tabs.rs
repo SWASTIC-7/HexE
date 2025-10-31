@@ -1,4 +1,4 @@
-use crate::predefined::common::{ObjectRecord, SymbolTable};
+use crate::predefined::common::{LiteralTable, ObjectRecord, SymbolTable};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
@@ -10,6 +10,7 @@ pub struct TabsWidget {
     pub selected_tab: usize,
     pub object_program: Vec<ObjectRecord>,
     pub symbol_table: Vec<SymbolTable>,
+    pub literal_table: Vec<LiteralTable>,
 }
 
 impl Default for TabsWidget {
@@ -24,15 +25,20 @@ impl TabsWidget {
             selected_tab: 0,
             object_program: Vec::new(),
             symbol_table: Vec::new(),
+            literal_table: Vec::new(),
         }
     }
 
     pub fn next_tab(&mut self) {
-        self.selected_tab = (self.selected_tab + 1) % 2;
+        self.selected_tab = (self.selected_tab + 1) % 3;
     }
 
     pub fn previous_tab(&mut self) {
-        self.selected_tab = if self.selected_tab == 0 { 1 } else { 0 };
+        self.selected_tab = if self.selected_tab == 0 {
+            2
+        } else {
+            self.selected_tab - 1
+        };
     }
 
     pub fn render(&self, f: &mut Frame, area: ratatui::layout::Rect) {
@@ -42,7 +48,7 @@ impl TabsWidget {
             .split(area);
 
         // Render tabs
-        let titles = vec!["Object Program", "Symbol Table"];
+        let titles = vec!["Object Program", "Symbol Table", "Literal Table"];
         let tabs = Tabs::new(titles)
             .block(
                 Block::default()
@@ -63,6 +69,7 @@ impl TabsWidget {
         match self.selected_tab {
             0 => self.render_object_program(f, chunks[1]),
             1 => self.render_symbol_table(f, chunks[1]),
+            2 => self.render_literal_table(f, chunks[1]),
             _ => {}
         }
     }
@@ -141,6 +148,50 @@ impl TabsWidget {
                 Block::default()
                     .borders(Borders::ALL)
                     .title("Symbol Table")
+                    .border_style(Style::default().fg(Color::Cyan)),
+            )
+            .style(Style::default().fg(Color::White));
+
+        f.render_widget(table, area);
+    }
+
+    fn render_literal_table(&self, f: &mut Frame, area: ratatui::layout::Rect) {
+        let mut rows: Vec<Row> = Vec::new();
+
+        // Add header row
+        rows.push(
+            Row::new(vec!["Literal", "Value", "Length", "Address"])
+                .style(Style::default().fg(Color::Rgb(255, 200, 0))),
+        );
+
+        for literal in &self.literal_table {
+            rows.push(
+                Row::new(vec![
+                    literal.literal.clone(),
+                    literal.value.clone(),
+                    format!("{}", literal.length),
+                    if let Some(addr) = literal.address {
+                        format!("{:06X}", addr)
+                    } else {
+                        "---".to_string()
+                    },
+                ])
+                .style(Style::default().fg(Color::White)),
+            );
+        }
+
+        let widths = &[
+            Constraint::Length(12),
+            Constraint::Length(20),
+            Constraint::Length(8),
+            Constraint::Length(10),
+        ];
+
+        let table = Table::new(rows, widths)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Literal Table")
                     .border_style(Style::default().fg(Color::Cyan)),
             )
             .style(Style::default().fg(Color::White));

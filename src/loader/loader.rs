@@ -6,6 +6,7 @@ use crate::predefined::opcode::get_instruction_format;
 //H == 3byte name ,3 byte starting addr of program,  3byte length
 //T == 3byte starting add, 1 byte length, 30byte obj_program
 //E == 3byte starting address of executable instructions
+//M == 3byte starting address, 1byte length(in half bytes), 1/2byte modification flag, 3byte external symbol
 
 pub fn loader(buffer: String) -> Vec<ObjectRecord> {
     let mut parsed_obj_prog = OBJECTPROGRAM.lock().unwrap();

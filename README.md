@@ -121,10 +121,12 @@ HexE/
 - [x] Symbol table generation
 - [x] Object code generation
 - [x] Memory visualization
-- [ ] Literal pool support
+- [x] Literal pool support
 - [ ] External references
 - [x] Control sections
 - [ ] EQU support
+- [ ] Operand Expression
+- [ ] Program Blocks
 - [ ] Debugger
 - [ ] Relocation
 - [ ] Linker

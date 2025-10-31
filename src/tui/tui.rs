@@ -196,6 +196,13 @@ impl Tui {
         self.tabs.symbol_table = symbol_table;
     }
 
+    pub fn update_literal_table(
+        &mut self,
+        literal_table: Vec<crate::predefined::common::LiteralTable>,
+    ) {
+        self.tabs.literal_table = literal_table;
+    }
+
     pub fn move_focus_left(&mut self) {
         if self.focused_button > 0 {
             self.focused_button -= 1;

@@ -200,13 +200,11 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                             locctr,
                         );
 
-                        // Format 4 instruction - add modification record
                         log_info(&format!(
                             "Format 4 instruction at {:06X}, adding modification record",
                             locctr
                         ));
 
-                        // Modification record: address + 1 (skip opcode byte), modify 5 half-bytes (20 bits)
                         modification_records.push(make_modification_record(
                             locctr,
                             &lines.parsedtoken.operand1,
@@ -278,7 +276,7 @@ pub fn object_code2(opcode: u8, operand1: &Option<String>, operand2: &Option<Str
 
     let combined_reg = (r1_code << 4) | r2_code;
 
-    format!("{:02X}{:02X}", opcode, combined_reg) // 2digit of opcode + 2digit of (r1_code+r2_code)
+    format!("{:02X}{:02X}", opcode, combined_reg)
 }
 
 //object code for format 3
@@ -311,9 +309,7 @@ pub fn object_code3(
     if let Some(opr) = operand1 {
         let mut operand = opr.clone();
 
-        // Check if operand is a literal
         if let Some(stripped) = opr.strip_prefix('=') {
-            // It's a literal - look it up in literal table
             if let Some(lit) = literal_table.iter().find(|l| l.literal == *opr) {
                 if let Some(lit_addr) = lit.address {
                     log_info(&format!(
@@ -321,7 +317,6 @@ pub fn object_code3(
                         opr, lit_addr
                     ));
 
-                    // Use literal address for displacement calculation
                     let target_addr = lit_addr;
                     let program_counter = current_locctr + 3;
                     let mut displacement = target_addr as i32 - program_counter as i32;
@@ -343,7 +338,6 @@ pub fn object_code3(
 
                         return format!("{:02X}{:02X}{:02X}", first_byte, second_byte, third_byte);
                     } else {
-                        // Try base-relative
                         displacement =
                             target_addr as i32 - base_address as i32 + program_counter as i32;
                         if (0..=4095).contains(&displacement) {
@@ -387,7 +381,6 @@ pub fn object_code3(
             }
         }
 
-        // Not a literal - handle as regular operand
         if let Some(stripped) = opr.strip_prefix('#') {
             flag_i = 1;
             operand = stripped.to_string();
@@ -539,7 +532,6 @@ pub fn object_code4(
             }
         }
 
-        // Handle regular operands
         if let Some(stripped) = opr.strip_prefix('#') {
             flag_i = 1;
             operand = stripped.to_string();

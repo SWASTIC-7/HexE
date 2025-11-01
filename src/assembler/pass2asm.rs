@@ -1,3 +1,4 @@
+use super::expression::evaluate_operand_expression;
 use super::pass1asm::pass1asm;
 use crate::error::{log_error, log_info, log_warning};
 use crate::predefined::common::{
@@ -46,7 +47,6 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                     }
                 }
                 "LTORG" | "END" => {
-                    // Generate object code for literals at this location
                     let literals_at_this_location: Vec<_> = literal_table
                         .iter()
                         .filter(|lit| lit.address == Some(lines.locctr))
@@ -60,7 +60,6 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                         ));
 
                         for lit in literals_at_this_location {
-                            // Add literal data to text record
                             text_length += lit.length as u8;
                             if let ObjectRecord::Text {
                                 length, objcodes, ..
@@ -282,7 +281,6 @@ pub fn object_code2(opcode: u8, operand1: &Option<String>, operand2: &Option<Str
 //object code for format 3
 #[warn(unused_mut)]
 pub fn object_code3(
-    //TODO: Add feature of literal
     opcode: u8,
     operand1: &Option<String>,
     operand2: &Option<String>,
@@ -309,6 +307,7 @@ pub fn object_code3(
     if let Some(opr) = operand1 {
         let mut operand = opr.clone();
 
+        // Check if operand is a literal
         if let Some(_stripped) = opr.strip_prefix('=') {
             if let Some(lit) = literal_table.iter().find(|l| l.literal == *opr) {
                 if let Some(lit_addr) = lit.address {
@@ -387,6 +386,81 @@ pub fn object_code3(
         } else if let Some(stripped) = opr.strip_prefix('@') {
             flag_n = 1;
             operand = stripped.to_string();
+        }
+
+        if operand.contains('+')
+            || operand.contains('-')
+            || operand.contains('*')
+            || operand.contains('/')
+            || operand.contains('(')
+        {
+            match evaluate_operand_expression(&operand, symbol_table) {
+                Ok(target_addr) => {
+                    let program_counter = current_locctr + 3;
+                    let mut displacement = target_addr as i32 - program_counter as i32;
+
+                    if (-2048..=2047).contains(&displacement) {
+                        flag_p = 1;
+                        if flag_n == 0 && flag_i == 0 {
+                            flag_i = 1;
+                            flag_n = 1;
+                        }
+                        let disp_12bit = (displacement & 0xFFF) as u16;
+                        let first_byte: u8 = opcode | flag_n << 1 | flag_i;
+                        let second_byte = (flag_x << 7)
+                            | (flag_b << 6)
+                            | (flag_p << 5)
+                            | (flag_e << 4)
+                            | ((disp_12bit >> 8) & 0x0F) as u8;
+                        let third_byte = (disp_12bit & 0xFF) as u8;
+
+                        return format!("{:02X}{:02X}{:02X}", first_byte, second_byte, third_byte);
+                    } else {
+                        displacement =
+                            target_addr as i32 - base_address as i32 + program_counter as i32;
+                        if (0..=4095).contains(&displacement) {
+                            flag_b = 1;
+                            if flag_n == 0 && flag_i == 0 {
+                                flag_i = 1;
+                                flag_n = 1;
+                            }
+                            let disp_12bit = (displacement & 0xFFF) as u16;
+                            let first_byte: u8 = opcode | flag_n << 1 | flag_i;
+                            let second_byte = (flag_x << 7)
+                                | (flag_b << 6)
+                                | (flag_p << 5)
+                                | (flag_e << 4)
+                                | ((disp_12bit >> 8) & 0x0F) as u8;
+                            let third_byte = (disp_12bit & 0xFF) as u8;
+
+                            return format!(
+                                "{:02X}{:02X}{:02X}",
+                                first_byte, second_byte, third_byte
+                            );
+                        } else {
+                            // Extend to format 4
+                            log_warning(&format!(
+                                "Expression '{}' result {:06X} out of range for format 3, extending to format 4",
+                                operand, target_addr
+                            ));
+                            return object_code4(
+                                opcode,
+                                operand1,
+                                operand2,
+                                symbol_table,
+                                literal_table,
+                                current_locctr,
+                            );
+                        }
+                    }
+                }
+                Err(e) => {
+                    log_warning(&format!(
+                        "Failed to evaluate expression '{}': {}",
+                        operand, e
+                    ));
+                }
+            }
         }
 
         if let Some(sym) = symbol_table.iter().find(|sym| sym.label == operand) {
@@ -540,10 +614,51 @@ pub fn object_code4(
             operand = stripped.to_string();
         }
 
+        if operand.contains('+')
+            || operand.contains('-')
+            || operand.contains('*')
+            || operand.contains('/')
+            || operand.contains('(')
+        {
+            match evaluate_operand_expression(&operand, symbol_table) {
+                Ok(target_addr) => {
+                    let addr_20bit = target_addr & 0xFFFFF;
+
+                    if flag_n == 0 && flag_i == 0 {
+                        flag_i = 1;
+                        flag_n = 1;
+                    }
+
+                    let first_byte = opcode | (flag_n << 1) | flag_i;
+
+                    let second_byte = (flag_x << 7)
+                        | (flag_b << 6)
+                        | (flag_p << 5)
+                        | (flag_e << 4)
+                        | ((addr_20bit >> 16) & 0x0F) as u8;
+
+                    let third_byte = ((addr_20bit >> 8) & 0xFF) as u8;
+
+                    let fourth_byte = (addr_20bit & 0xFF) as u8;
+
+                    return format!(
+                        "{:02X}{:02X}{:02X}{:02X}",
+                        first_byte, second_byte, third_byte, fourth_byte
+                    );
+                }
+                Err(e) => {
+                    log_warning(&format!(
+                        "Failed to evaluate expression '{}': {}",
+                        operand, e
+                    ));
+                }
+            }
+        }
+
         if let Some(sym) = symbol_table.iter().find(|sym| sym.label == operand) {
             let target_addr = sym.address;
 
-            let addr_20bit = target_addr & 0xFFFFF; // 20-bit address
+            let addr_20bit = target_addr & 0xFFFFF;
 
             if flag_n == 0 && flag_i == 0 {
                 flag_i = 1;
@@ -579,4 +694,3 @@ pub fn make_modification_record(current_locctr: u32, operand1: &Option<String>) 
         variable: operand1.clone().unwrap_or_default(),
     }
 }
-//TODO : add the feature of Literals support

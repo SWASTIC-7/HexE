@@ -110,16 +110,15 @@ fn parse_operand(operand: &str, symbol_table: &[SymbolTable]) -> Result<Token, S
     if let Some(hex_str) = operand
         .strip_prefix("0x")
         .or_else(|| operand.strip_prefix("0X"))
+        && let Ok(num) = i32::from_str_radix(hex_str, 16)
     {
-        if let Ok(num) = i32::from_str_radix(hex_str, 16) {
-            return Ok(Token::Number(num));
-        }
+        return Ok(Token::Number(num));
     }
 
-    if let Some(hex_str) = operand.strip_prefix('$') {
-        if let Ok(num) = i32::from_str_radix(hex_str, 16) {
-            return Ok(Token::Number(num));
-        }
+    if let Some(hex_str) = operand.strip_prefix('$')
+        && let Ok(num) = i32::from_str_radix(hex_str, 16)
+    {
+        return Ok(Token::Number(num));
     }
 
     if let Some(index) = symbol_table.iter().position(|sym| sym.label == operand) {

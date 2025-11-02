@@ -1,6 +1,6 @@
 # HexE - SIC/XE Assembler & Simulator
 
-A comprehensive toolchain for the SIC/XE (Simplified Instructional Computer - Extended) architecture, featuring a two-pass assembler, loader, disassembler, and an interactive TUI-based debugger.
+A comprehensive toolchain for the SIC/XE (Simplified Instructional Computer - Extended) architecture, featuring a two-pass assembler, linker, loader, disassembler, and an interactive TUI-based debugger.
 
 ![TUI Simulator](reference_material/tui_small.png)
 
@@ -124,8 +124,8 @@ HexE/
 - [x] Literal pool support
 - [ ] External references
 - [x] Control sections
-- [ ] EQU support
-- [ ] Operand Expression
+- [x] EQU support
+- [x] Operand Expression
 - [ ] Program Blocks
 - [ ] Debugger
 - [ ] Relocation

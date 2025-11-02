@@ -2,7 +2,8 @@ use super::expression::evaluate_operand_expression;
 use super::parser::parser;
 use crate::error::log_info;
 use crate::predefined::common::{
-    Command, LITERALTABLE, LabeledParsedLines, LiteralTable, SYMBOLTABLE, SymbolTable,
+    Command, LITERALTABLE, LabeledParsedLines, LiteralTable, PROGRAMBLOCK, ProgramBlock,
+    SYMBOLTABLE, SymbolTable,
 };
 
 fn parse_literal(literal: &str) -> Option<(String, u32)> {
@@ -36,6 +37,16 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
     let mut length = 0;
     let mut startaddr = 0x00;
     let mut pending_literals: Vec<String> = Vec::new();
+    let mut blocks = PROGRAMBLOCK.lock().unwrap();
+    let mut current_block: usize = 0;
+    let mut block_counter: u32 = 0;
+
+    blocks.push(ProgramBlock {
+        name: "(default)".to_string(),
+        number: 0,
+        start_address: 0,
+        length: 0,
+    });
 
     for lines in parsed_lines.iter() {
         labeledparsedline.push(LabeledParsedLines {
@@ -159,7 +170,43 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
                             }
                         }
                         "USE" => {
-                            //TODO
+                            if current_block < blocks.len() {
+                                blocks[current_block].length =
+                                    locctr - blocks[current_block].start_address;
+                            }
+
+                            let block_name =
+                                lines.operand1.clone().unwrap_or("(default)".to_string());
+                            if let Some(pos) = blocks.iter().position(|b| b.name == block_name) {
+                                current_block = pos;
+                                locctr = blocks[current_block].start_address
+                                    + blocks[current_block].length;
+                            } else {
+                                block_counter += 1;
+                                let new_start = if block_counter == 1 {
+                                    blocks[0].start_address + blocks[0].length
+                                } else {
+                                    blocks
+                                        .last()
+                                        .map(|b| b.start_address + b.length)
+                                        .unwrap_or(0)
+                                };
+
+                                blocks.push(ProgramBlock {
+                                    name: block_name.clone(),
+                                    number: block_counter,
+                                    start_address: new_start,
+                                    length: 0,
+                                });
+
+                                current_block = blocks.len() - 1;
+                                locctr = new_start;
+
+                                log_info(&format!(
+                                    "Created new block '{}' (#{}) at address {:04X}",
+                                    block_name, block_counter, new_start
+                                ));
+                            }
                         }
                         "ORG" => {
                             let operand: Option<String> = lines.operand1.clone();
@@ -237,6 +284,24 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
                 }
             }
         }
+    }
+    if current_block < blocks.len() {
+        blocks[current_block].length = locctr - blocks[current_block].start_address;
+    }
+
+    log_info(&format!(
+        "=== PROGRAM BLOCKS ({} entries) ===",
+        blocks.len()
+    ));
+    log_info(&format!(
+        "{:<15} {:<15} {:<10} {:<10}",
+        "Block name", "Block number", "Address", "Length"
+    ));
+    for block in blocks.iter() {
+        log_info(&format!(
+            "{:<15} {:<15} {:04X}       {:04X}",
+            block.name, block.number, block.start_address, block.length
+        ));
     }
 
     log_info(&format!(

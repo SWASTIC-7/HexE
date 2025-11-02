@@ -158,8 +158,28 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
                                 symbol_table.push(SymbolTable { label, address });
                             }
                         }
+                        "USE" => {
+                            //TODO
+                        }
                         "ORG" => {
-                            //TODO: to implement
+                            
+                            let operand: Option<String> = lines.operand1.clone();
+
+                                let address: u32 = if let Some(expr) = &operand {
+                                    match evaluate_operand_expression(expr, &symbol_table) {
+                                        Ok(val) => val,
+                                        Err(e) => {
+                                            log_info(&format!(
+                                                "Failed to evaluate ORG expression '{}': {}",
+                                                expr, e
+                                            ));
+                                            locctr
+                                        }
+                                    }
+                                } else {
+                                    locctr
+                                };
+                                locctr = address;
                         }
                         "WORD" => {
                             if let Some(label) = lines.label.clone() {

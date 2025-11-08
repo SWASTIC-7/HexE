@@ -126,14 +126,10 @@ HexE/
 - [x] Control sections
 - [x] EQU support
 - [x] Operand Expression
-- [ ] Program Blocks
+- [x] Program Blocks
 - [ ] Debugger
 - [ ] Relocation
 - [ ] Linker
-
-## License
-
-This project is developed for educational purposes.
 
 ## Acknowledgments
 

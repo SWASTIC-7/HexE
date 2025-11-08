@@ -27,6 +27,7 @@ impl Default for Tui {
     }
 }
 
+#[allow(dead_code)]
 impl Tui {
     pub fn new() -> Self {
         Self {
@@ -157,7 +158,6 @@ impl Tui {
         }
     }
 
-    // Add methods to update component states
     pub fn update_registers(&mut self, a: u32, x: u32, l: u32, pc: u32, sw: u32) {
         self.registers.a = a;
         self.registers.x = x;
@@ -201,6 +201,13 @@ impl Tui {
         literal_table: Vec<crate::predefined::common::LiteralTable>,
     ) {
         self.tabs.literal_table = literal_table;
+    }
+
+    pub fn update_program_blocks(
+        &mut self,
+        program_blocks: Vec<crate::predefined::common::ProgramBlock>,
+    ) {
+        self.tabs.program_blocks = program_blocks;
     }
 
     pub fn move_focus_left(&mut self) {

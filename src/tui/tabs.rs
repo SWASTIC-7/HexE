@@ -1,4 +1,4 @@
-use crate::predefined::common::{LiteralTable, ObjectRecord, SymbolTable};
+use crate::predefined::common::{LiteralTable, ObjectRecord, ProgramBlock, SymbolTable};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
@@ -11,6 +11,7 @@ pub struct TabsWidget {
     pub object_program: Vec<ObjectRecord>,
     pub symbol_table: Vec<SymbolTable>,
     pub literal_table: Vec<LiteralTable>,
+    pub program_blocks: Vec<ProgramBlock>,
 }
 
 impl Default for TabsWidget {
@@ -26,16 +27,17 @@ impl TabsWidget {
             object_program: Vec::new(),
             symbol_table: Vec::new(),
             literal_table: Vec::new(),
+            program_blocks: Vec::new(),
         }
     }
 
     pub fn next_tab(&mut self) {
-        self.selected_tab = (self.selected_tab + 1) % 3;
+        self.selected_tab = (self.selected_tab + 1) % 4;
     }
 
     pub fn previous_tab(&mut self) {
         self.selected_tab = if self.selected_tab == 0 {
-            2
+            3
         } else {
             self.selected_tab - 1
         };
@@ -48,7 +50,12 @@ impl TabsWidget {
             .split(area);
 
         // Render tabs
-        let titles = vec!["Object Program", "Symbol Table", "Literal Table"];
+        let titles = vec![
+            "Object Program",
+            "Symbol Table",
+            "Literal Table",
+            "Program Blocks",
+        ];
         let tabs = Tabs::new(titles)
             .block(
                 Block::default()
@@ -70,6 +77,7 @@ impl TabsWidget {
             0 => self.render_object_program(f, chunks[1]),
             1 => self.render_symbol_table(f, chunks[1]),
             2 => self.render_literal_table(f, chunks[1]),
+            3 => self.render_program_blocks(f, chunks[1]),
             _ => {}
         }
     }
@@ -192,6 +200,46 @@ impl TabsWidget {
                 Block::default()
                     .borders(Borders::ALL)
                     .title("Literal Table")
+                    .border_style(Style::default().fg(Color::Cyan)),
+            )
+            .style(Style::default().fg(Color::White));
+
+        f.render_widget(table, area);
+    }
+
+    fn render_program_blocks(&self, f: &mut Frame, area: ratatui::layout::Rect) {
+        let mut rows: Vec<Row> = Vec::new();
+
+        // Add header row
+        rows.push(
+            Row::new(vec!["Block Name", "Number", "Start Address", "Length"])
+                .style(Style::default().fg(Color::Rgb(255, 200, 0))),
+        );
+
+        for block in &self.program_blocks {
+            rows.push(
+                Row::new(vec![
+                    block.name.clone(),
+                    format!("{}", block.number),
+                    format!("{:04X}", block.start_address),
+                    format!("{:04X}", block.length),
+                ])
+                .style(Style::default().fg(Color::White)),
+            );
+        }
+
+        let widths = &[
+            Constraint::Length(15),
+            Constraint::Length(8),
+            Constraint::Length(15),
+            Constraint::Length(10),
+        ];
+
+        let table = Table::new(rows, widths)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Program Blocks")
                     .border_style(Style::default().fg(Color::Cyan)),
             )
             .style(Style::default().fg(Color::White));

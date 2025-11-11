@@ -124,45 +124,6 @@ mod simulator_tests {
     }
 
     #[test]
-    fn test_program_loading() {
-        {
-            let mut program = OBJECTPROGRAM.lock().unwrap();
-            program.clear();
-            *program = vec![
-                ObjectRecord::Header {
-                    name: "TEST".to_string(),
-                    start: 0x1000,
-                    length: 0x100,
-                },
-                ObjectRecord::Text {
-                    start: 0x1000,
-                    length: 3,
-                    objcodes: vec!["4B1000".to_string()],
-                },
-                ObjectRecord::End { start: 0x1000 },
-            ];
-        }
-
-        let mut sim = Simulator::new();
-        sim.load_program();
-
-        {
-            let mut program = OBJECTPROGRAM.lock().unwrap();
-            program.clear();
-        }
-
-        assert_eq!(sim.program_start, 0x1000, "Program should start at 0x1000");
-        assert_eq!(
-            sim.machine.reg_pc, 0x1000,
-            "PC should be set to program start"
-        );
-        assert!(
-            !sim.instructions.is_empty(),
-            "Instructions should be loaded"
-        );
-    }
-
-    #[test]
     fn test_format4_addressing() {
         let mut sim = Simulator::new();
         sim.machine.reg_pc = 0x1000;

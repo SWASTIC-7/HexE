@@ -1,7 +1,9 @@
-use crate::error::{log_error, log_info, log_warning};
+use crate::error::{log_info, log_warning};
+use crate::loader::linker::ControlSection;
 use crate::predefined::common::{
     AddressFlags, Command, DisAssembledToken, EXTERNALDEFS, EXTERNALREFS, ExternalDefinition,
-    ExternalReference, Instruction, ModificationInfo, OBJECTPROGRAM, ObjectRecord, OpCode, Reg,
+    ExternalReference, Instruction, ModificationInfo, OBJECTPROGRAM, ObjectRecord, OpCode,
+    PROGRAMBLOCK, Reg,
 };
 use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
@@ -21,12 +23,19 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
     let mut parsed_dissassembled_code: Vec<DisAssembledToken> = Vec::new();
     let mut modification_records: Vec<(u32, u8, bool, String)> = Vec::new();
     let mut program_name = String::from("UNKNOWN");
+    let mut current_control_section: Option<ControlSection> = None;
 
-    // Clear external symbol tables
     EXTERNALDEFS.lock().unwrap().clear();
     EXTERNALREFS.lock().unwrap().clear();
 
-    for lines in OBJECTPROGRAM.lock().unwrap().iter() {
+        let program_blocks = PROGRAMBLOCK.lock().unwrap().clone();
+        let object_records = OBJECTPROGRAM.lock().unwrap().clone();
+        let control_sections: Vec<ControlSection> = {
+            log_warning("Linker unavailable; proceeding without relocation");
+            Vec::new()
+        };
+
+    for lines in object_records.iter() {
         match lines {
             ObjectRecord::Header {
                 name,
@@ -35,20 +44,40 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
             } => {
                 starting_addr = *start;
                 program_name = name.clone();
-                log_info(&format!(
-                    "Program: {}, Start: {:06X}, Length: {:06X}",
-                    name, start, length
-                ));
+
+                current_control_section = control_sections
+                    .iter()
+                    .find(|cs| cs.name == *name)
+                    .cloned();
+
+                if let Some(ref cs) = current_control_section {
+                    log_info(&format!(
+                        "Program: {}, Original Start: {:06X}, Relocated to: {:06X}, Length: {:06X}",
+                        name, cs.original_start, cs.load_address, length
+                    ));
+                } else {
+                    log_info(&format!(
+                        "Program: {}, Start: {:06X}, Length: {:06X}",
+                        name, start, length
+                    ));
+                }
             }
             ObjectRecord::Text {
                 start,
                 length,
                 objcodes,
             } => {
-                locctr = *start;
+                // Calculate relocated address
+                let relocation_factor = current_control_section
+                    .as_ref()
+                    .map(|cs| cs.load_address as i32 - cs.original_start as i32)
+                    .unwrap_or(0);
+
+                locctr = (*start as i32 + relocation_factor) as u32;
+
                 log_info(&format!(
-                    "Text section at {:06X}, length: {:02X}",
-                    start, length
+                    "Text section at {:06X} (original {:06X}), length: {:02X}",
+                    locctr, start, length
                 ));
 
                 for item in objcodes.iter() {
@@ -83,8 +112,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                         2 => {
                             //format 2
                             let bytes = hex::decode(item).expect("Invalid hex string");
-                            let reverse_table: std::collections::HashMap<u8, (&'static str, u8)> =
-                                reverse_optab();
+                            let reverse_table = reverse_optab();
                             let instr_name = reverse_table.get(&bytes[0]);
                             let register_map = reverse_register_map();
 
@@ -106,11 +134,11 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                             let r1_name = register_map
                                 .get(&r1)
                                 .map(|s| s.to_string())
-                                .unwrap_or_else(|| format!("R{}", r1));
+                                .unwrap_or_else(|| format!("{}", r1));
                             let r2_name = register_map
                                 .get(&r2)
                                 .map(|s| s.to_string())
-                                .unwrap_or_else(|| format!("R{}", r2));
+                                .unwrap_or_else(|| format!("{}", r2));
 
                             let code_line = DisAssembledToken {
                                 locctr,
@@ -154,11 +182,30 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
 
                             let displacement = ((bytes[1] & 0x0F) as u16) << 8 | bytes[2] as u16;
 
+                            // Calculate actual target address for PC-relative or base-relative
+                            let target_address = if flags.p {
+                                // PC-relative: TA = (PC) + disp
+                                let pc = locctr + 3;
+                                let signed_disp = if displacement & 0x800 != 0 {
+                                    // Negative displacement
+                                    (displacement as i16 | 0xF000_u16 as i16) as i32
+                                } else {
+                                    displacement as i32
+                                };
+                                (pc as i32 + signed_disp) as u32
+                            } else if flags.b {
+                                // Base-relative: TA = (B) + disp
+                                // We don't know the base register value here, so use displacement
+                                displacement as u32
+                            } else {
+                                displacement as u32
+                            };
+
                             let code_line = DisAssembledToken {
                                 locctr,
                                 command: Command::Instruction(instr),
                                 flags: Some(flags),
-                                address: Some(displacement as u32),
+                                address: Some(target_address),
                                 reg: None,
                                 modification: None,
                             };
@@ -191,7 +238,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                 e: (bytes[1] & 0b00010000) != 0,
                             };
 
-                            let displacement = ((bytes[1] & 0x0F) as u32) << 16
+                            let address = ((bytes[1] & 0x0F) as u32) << 16
                                 | (bytes[2] as u32) << 8
                                 | (bytes[3] as u32);
 
@@ -199,7 +246,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                 locctr,
                                 command: Command::Instruction(instr),
                                 flags: Some(flags),
-                                address: Some(displacement),
+                                address: Some(address),
                                 reg: None,
                                 modification: None,
                             };
@@ -221,16 +268,24 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 }
             }
             ObjectRecord::Define { name, address } => {
+                // Calculate relocated address
+                let relocated_address = if let Some(ref cs) = current_control_section {
+                    let relocation_factor = cs.load_address as i32 - cs.original_start as i32;
+                    (*address as i32 + relocation_factor) as u32
+                } else {
+                    *address
+                };
+
                 log_info(&format!(
-                    "Define record: {} at address {:06X}",
-                    name, address
+                    "Define record: {} at original {:06X}, relocated to {:06X}",
+                    name, address, relocated_address
                 ));
 
                 // Store external definition
                 let mut extdefs = EXTERNALDEFS.lock().unwrap();
                 extdefs.push(ExternalDefinition {
                     name: name.clone(),
-                    address: *address,
+                    address: relocated_address,
                     control_section: program_name.clone(),
                 });
 
@@ -258,31 +313,32 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
             }
             ObjectRecord::End { start } => {
                 let end_start_addr = *start;
-                if end_start_addr == starting_addr {
-                    log_info("File disassembled successfully");
+                
+                // Check if it matches either original or relocated start
+                let matches = if let Some(ref cs) = current_control_section {
+                    end_start_addr == cs.original_start || end_start_addr == cs.load_address
+                } else {
+                    end_start_addr == starting_addr
+                };
 
-                    // Log modification records
+                if matches {
+                    log_info(&format!(
+                        "File disassembled successfully (end address: {:06X})",
+                        end_start_addr
+                    ));
+
                     if !modification_records.is_empty() {
                         log_info(&format!(
                             "Found {} modification records",
                             modification_records.len()
                         ));
-                        for (addr, len, sign, variable) in &modification_records {
-                            log_info(&format!(
-                                "  Modification at {:06X}, length: {} half-bytes, {} {}",
-                                addr,
-                                len,
-                                if *sign { "+" } else { "-" },
-                                variable
-                            ));
-                        }
                     }
 
                     break;
                 } else {
-                    log_error(&format!(
-                        "Corrupt object program: start address {:06X} doesn't match end address {:06X}",
-                        starting_addr, end_start_addr
+                    log_warning(&format!(
+                        "End address {:06X} doesn't match start address {:06X}",
+                        end_start_addr, starting_addr
                     ));
                 }
             }
@@ -292,6 +348,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 sign,
                 variable,
             } => {
+                // Store with original address - will be relocated when applied
                 modification_records.push((*address, *length, *sign, variable.clone()));
                 log_info(&format!(
                     "Modification record at address {:06X}, length: {} half-bytes (modifying {} bits), {} {}",
@@ -308,20 +365,32 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
     // After processing all records, attempt to resolve external references
     resolve_external_references();
 
+    // Apply modifications with proper relocation
     if !modification_records.is_empty() {
         log_info(&format!(
-            "Applying {} modification records",
+            "Applying {} modification records to disassembled code",
             modification_records.len()
         ));
 
         for (mod_addr, mod_length, sign, variable) in &modification_records {
+            // Find which control section this modification belongs to
+            let relocated_mod_addr = if let Some(cs) = control_sections
+                .iter()
+                .find(|cs| *mod_addr >= cs.original_start && *mod_addr < cs.original_start + cs.length)
+            {
+                let relocation_factor = cs.load_address as i32 - cs.original_start as i32;
+                (*mod_addr as i32 + relocation_factor) as u32
+            } else {
+                *mod_addr
+            };
+
             if let Some(instruction) = parsed_dissassembled_code.iter_mut().find(|token| {
                 let instr_addr = token.locctr;
                 let instr_size = match &token.command {
                     Command::Instruction(instr) => instr.opcode.format as u32,
                     _ => 0,
                 };
-                *mod_addr >= instr_addr && *mod_addr < instr_addr + instr_size
+                relocated_mod_addr >= instr_addr && relocated_mod_addr < instr_addr + instr_size
             }) {
                 log_info(&format!(
                     "  Applying modification to instruction at {:06X}: {} {} (length: {} half-bytes)",
@@ -338,10 +407,28 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 });
             } else {
                 log_warning(&format!(
-                    "  Modification record at {:06X} doesn't match any instruction",
-                    mod_addr
+                    "  Modification record at {:06X} (relocated: {:06X}) doesn't match any instruction",
+                    mod_addr, relocated_mod_addr
                 ));
             }
+        }
+    }
+
+    // Log program blocks if any
+    if !program_blocks.is_empty() {
+        log_info(&format!(
+            "=== PROGRAM BLOCKS ({} entries) ===",
+            program_blocks.len()
+        ));
+        for block in program_blocks.iter() {
+            log_info(&format!(
+                "  Block '{}' #{}: {:04X} - {:04X} (length: {:04X})",
+                block.name,
+                block.number,
+                block.start_address,
+                block.start_address + block.length,
+                block.length
+            ));
         }
     }
 

@@ -1,5 +1,5 @@
 use crate::error::{log_info, log_warning};
-use crate::predefined::common::{OBJECTPROGRAM, ObjectRecord};
+use crate::predefined::common::{ OBJECTPROGRAM, ObjectRecord};
 use crate::predefined::opcode::get_instruction_format;
 
 //Object program structure
@@ -100,7 +100,6 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
                             }
                         }
 
-                        // If not processed, check for format 3/4 (masked opcode)
                         if !processed {
                             let opcode = byte_val & 0xFC;
                             if let Some(format) = get_instruction_format(opcode) {
@@ -124,7 +123,6 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
                             }
                         }
 
-                        //  If nothing was processed, increment by 2 to avoid infinite loop
                         if !processed {
                             log_warning(&format!(
                                 "Unknown opcode: 0x{:02X}, skipping 2 bytes",
@@ -153,34 +151,76 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
                 parsed_obj_prog.push(parsed_obj);
             }
             'M' => {
-                //TODO: implement properly
-                // Modification record: M + 6char address + 2char length (half-bytes) + sign(1bit) + variable
-                if record.len() < 8 {
+                // Modification record: M + 6char address + 2char length (half-bytes) + 1char sign + variable name
+                if record.len() < 9 {
                     log_warning("Invalid modification record: too short");
                     continue;
                 }
 
                 let addr_hex = &record[0..6];
                 let length_hex = &record[6..8];
+                let sign_and_var = &record[8..];
 
                 let address = u32::from_str_radix(addr_hex, 16).unwrap_or(0);
                 let length = u8::from_str_radix(length_hex, 16).unwrap_or(0);
 
+                let sign = sign_and_var.chars().next().unwrap_or('+') == '+';
+                let variable = sign_and_var[1..].to_string();
+
                 log_info(&format!(
-                    "Loaded modification record: address {:06X}, length {} half-bytes",
-                    address, length
+                    "Loaded modification record: address {:06X}, length {} half-bytes, {}{}", 
+                    address, length, if sign { "+" } else { "-" }, variable
                 ));
 
-                // let parsed_obj = ObjectRecord::Modification { address, length};
-                // parsed_obj_prog.push(parsed_obj);
+                let parsed_obj = ObjectRecord::Modification {
+                    address,
+                    length,
+                    sign,
+                    variable,
+                };
+                parsed_obj_prog.push(parsed_obj);
+            }
+            'D' => {
+                // Define record: D + symbol name (6 chars) + address (6 chars), can have multiple
+                let mut offset = 0;
+                while offset + 12 <= record.len() {
+                    let symbol_name = record[offset..offset + 6].trim().to_string();
+                    let addr_hex = &record[offset + 6..offset + 12];
+                    let address = u32::from_str_radix(addr_hex, 16).unwrap_or(0);
+
+                    log_info(&format!(
+                        "Loaded define record: {} at {:06X}",
+                        symbol_name, address
+                    ));
+
+                    let parsed_obj = ObjectRecord::Define {
+                        name: symbol_name,
+                        address,
+                    };
+                    parsed_obj_prog.push(parsed_obj);
+                    offset += 12;
+                }
+            }
+            'R' => {
+                // Refer record: R + symbol names (6 chars each)
+                let mut offset = 0;
+                while offset + 6 <= record.len() {
+                    let symbol_name = record[offset..offset + 6].trim().to_string();
+
+                    log_info(&format!("Loaded refer record: {}", symbol_name));
+
+                    let parsed_obj = ObjectRecord::Refer {
+                        name: symbol_name,
+                    };
+                    parsed_obj_prog.push(parsed_obj);
+                    offset += 6;
+                }
             }
             _ => {
                 log_warning(&format!("Unknown record type: {}", record_header));
             }
         }
     }
-    // for items in parsed_obj_prog.iter() {
-    //     println!("{:?}", items);
-    // }
+    
     parsed_obj_prog.clone()
 }

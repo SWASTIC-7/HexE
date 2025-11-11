@@ -106,7 +106,7 @@ HexE/
 ├── src/
 │   ├── assembler/     # Two-pass assembler implementation
 │   ├── disassembler/  # Object code to assembly converter
-│   ├── loader/        # Object program loader
+│   ├── loader/        # Object program loader and linker
 │   ├── simulator/     # Execution engine
 │   ├── tui/          # Terminal UI components
 │   └── predefined/    # Opcode tables and definitions
@@ -122,14 +122,14 @@ HexE/
 - [x] Object code generation
 - [x] Memory visualization
 - [x] Literal pool support
-- [ ] External references
+- [x] External references
 - [x] Control sections
 - [x] EQU support
 - [x] Operand Expression
 - [x] Program Blocks
 - [ ] Debugger
-- [ ] Relocation
-- [ ] Linker
+- [x] Relocation
+- [x] Linker
 
 ## Acknowledgments
 

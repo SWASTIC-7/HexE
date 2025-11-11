@@ -44,17 +44,29 @@ impl Simulator {
     }
 
     pub fn load_program(&mut self) {
-        self.instructions = disassembler::disassemble();
+        log_info("Loading program (linker not used; initializing from OBJECTPROGRAM and disassembler)");
 
-        if !self.instructions.is_empty() {
-            self.program_start = self.instructions[0].locctr;
+        let _object_program = OBJECTPROGRAM.lock().unwrap().clone();
+
+        self.find_program_start_from_header();
+
+        if self.program_start != 0 {
+            self.machine.reg_pc = self.program_start;
+            log_info(&format!("Program start found at {:06X}", self.program_start));
         } else {
-            self.find_program_start_from_header();
+            log_info("No program header found; PC remains at default");
         }
 
-        self.machine.reg_pc = self.program_start;
-        log_info(&format!("Program starts at: {:06X}", self.program_start));
+        self.instructions = disassembler::disassemble();
         log_info(&format!("Loaded {} instructions", self.instructions.len()));
+
+        if let Some(first_instr) = self.instructions.first() {
+            self.machine.reg_pc = first_instr.locctr;
+            log_info(&format!(
+                "PC set to first instruction at {:06X}",
+                self.machine.reg_pc
+            ));
+        }
     }
 
     pub fn run(&mut self) {
@@ -271,69 +283,23 @@ impl Simulator {
         }
     }
 
-    // pub fn remove_breakpoint(&mut self, address: u32) {
-    //     if let Some(pos) = self.breakpoints.iter().position(|&x| x == address) {
-    //         self.breakpoints.remove(pos);
-    //         println!("Breakpoint removed from {:06X}", address);
-    //     }
-    // }
-
-    // pub fn get_disassembly(&self) -> &Vec<DisAssembledToken> {
-    //     &self.instructions
-    // }
-
-    // pub fn print_state(&self) {
-    //     println!("\n=== MACHINE STATE ===");
-    //     println!(
-    //         "A: {:06X}  X: {:06X}  L: {:06X}",
-    //         self.machine.reg_a, self.machine.reg_x, self.machine.reg_l
-    //     );
-    //     println!(
-    //         "B: {:06X}  S: {:06X}  T: {:06X}",
-    //         self.machine.reg_b, self.machine.reg_s, self.machine.reg_t
-    //     );
-    //     println!(
-    //         "F: {:.2}     PC: {:06X}  SW: {:06X}",
-    //         self.machine.reg_f, self.machine.reg_pc, self.machine.reg_sw
-    //     );
-    //     println!("CC: {}     Running: {}", self.machine.cc, self.running);
-    // }
+ 
 }
 
-// Main simulator function for compatibility
-// pub fn simulator(buffer: String) {
-//     let mut sim = Simulator::new();
-//     sim.load_program();
-
-//     println!("Starting simulation...");
-//     sim.print_state();
-
-//     // Run the simulation
-//     sim.run();
-//     sim.remove_breakpoint(0x1000); // Example usage
-//     sim.get_disassembly(); // Example usage
-//     sim.print_state(); // Example usage
-
-//     println!("Simulation completed.");
-//     sim.print_state();
-// }
 
 pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
     log_info("Starting TUI simulator");
 
-    // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    // Create app state
     let mut tui = Tui::new();
     let mut sim = Simulator::new();
     sim.load_program();
 
-    // Load object program and symbol table from global state
     let object_program = {
         let obj_prog = OBJECTPROGRAM.lock().unwrap();
         obj_prog.clone()

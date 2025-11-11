@@ -1,6 +1,6 @@
 use crate::error::{log_info, log_warning};
 use crate::predefined::common::{
-    ExternalDefinition, ExternalReference, EXTERNALDEFS, EXTERNALREFS, ObjectRecord,
+    EXTERNALDEFS, EXTERNALREFS, ExternalDefinition, ExternalReference, ObjectRecord,
 };
 use std::collections::HashMap;
 
@@ -61,7 +61,11 @@ impl Linker {
 
         Ok(LinkedProgram {
             memory: linked_memory,
-            start_address: self.control_sections.first().map(|cs| cs.load_address).unwrap_or(0),
+            start_address: self
+                .control_sections
+                .first()
+                .map(|cs| cs.load_address)
+                .unwrap_or(0),
             program_length: total_length,
             control_sections: self.control_sections.clone(),
         })
@@ -69,7 +73,12 @@ impl Linker {
 
     fn collect_control_sections(&mut self, records: &[ObjectRecord]) -> Result<(), String> {
         for record in records {
-            if let ObjectRecord::Header { name, start, length } = record {
+            if let ObjectRecord::Header {
+                name,
+                start,
+                length,
+            } = record
+            {
                 let cs = ControlSection {
                     name: name.clone(),
                     load_address: self.current_load_address,
@@ -137,7 +146,11 @@ impl Linker {
     }
 
     fn apply_relocations(&mut self, records: &[ObjectRecord]) -> Result<Vec<u8>, String> {
-        let total_size: usize = self.control_sections.iter().map(|cs| cs.length as usize).sum();
+        let total_size: usize = self
+            .control_sections
+            .iter()
+            .map(|cs| cs.length as usize)
+            .sum();
         let mut memory = vec![0u8; total_size];
 
         let mut current_cs: Option<&ControlSection> = None;
@@ -149,7 +162,9 @@ impl Linker {
                 ObjectRecord::Header { name, .. } => {
                     current_cs = self.control_sections.iter().find(|cs| cs.name == *name);
                 }
-                ObjectRecord::Text { start, objcodes, .. } => {
+                ObjectRecord::Text {
+                    start, objcodes, ..
+                } => {
                     if let Some(cs) = current_cs {
                         let relocation_factor = cs.load_address.wrapping_sub(cs.original_start);
                         let relocated_start = start.wrapping_add(relocation_factor);
@@ -161,10 +176,13 @@ impl Linker {
 
                         let mut current_addr = relocated_start;
                         for objcode in objcodes {
-                            let bytes = hex::decode(objcode).map_err(|e| format!("Hex decode error: {}", e))?;
-                            
+                            let bytes = hex::decode(objcode)
+                                .map_err(|e| format!("Hex decode error: {}", e))?;
+
                             for byte in bytes {
-                                let offset = current_addr.wrapping_sub(self.control_sections[0].load_address) as usize;
+                                let offset = current_addr
+                                    .wrapping_sub(self.control_sections[0].load_address)
+                                    as usize;
                                 if offset < memory.len() {
                                     memory[offset] = byte;
                                 }
@@ -173,7 +191,12 @@ impl Linker {
                         }
                     }
                 }
-                ObjectRecord::Modification { address, length, sign, variable } => {
+                ObjectRecord::Modification {
+                    address,
+                    length,
+                    sign,
+                    variable,
+                } => {
                     modifications.push((*address, *length, *sign, variable.clone()));
                 }
                 ObjectRecord::Refer { name } => {
@@ -203,7 +226,10 @@ impl Linker {
         memory: &mut [u8],
         modifications: &[(u32, u8, bool, String)],
     ) -> Result<(), String> {
-        log_info(&format!("=== APPLYING {} MODIFICATIONS ===", modifications.len()));
+        log_info(&format!(
+            "=== APPLYING {} MODIFICATIONS ===",
+            modifications.len()
+        ));
 
         for (address, length, sign, variable) in modifications {
             let mut current_cs: Option<&ControlSection> = None;
@@ -217,15 +243,17 @@ impl Linker {
             if let Some(cs) = current_cs {
                 let relocation_factor = cs.load_address.wrapping_sub(cs.original_start);
                 let absolute_addr = address.wrapping_add(relocation_factor);
-                
-                let offset = absolute_addr.wrapping_sub(self.control_sections[0].load_address) as usize;
+
+                let offset =
+                    absolute_addr.wrapping_sub(self.control_sections[0].load_address) as usize;
 
                 let modification_value = if variable.is_empty() {
                     relocation_factor
                 } else {
-                    self.external_symbols.get(variable).copied().ok_or_else(|| {
-                        format!("Unresolved external symbol: {}", variable)
-                    })?
+                    self.external_symbols
+                        .get(variable)
+                        .copied()
+                        .ok_or_else(|| format!("Unresolved external symbol: {}", variable))?
                 };
 
                 let half_bytes = *length as usize;
@@ -233,8 +261,8 @@ impl Linker {
 
                 if offset < memory.len() {
                     let mut current_value = 0u32;
-                    let bytes_to_read = (bits_to_modify + 7) / 8;
-                    
+                    let bytes_to_read = bits_to_modify.div_ceil(8);
+
                     for i in 0..bytes_to_read.min(4) {
                         if offset + i < memory.len() {
                             current_value = (current_value << 8) | (memory[offset + i] as u32);
@@ -250,7 +278,8 @@ impl Linker {
                     let new_value = if *sign {
                         (current_value & !mask) | ((current_value + modification_value) & mask)
                     } else {
-                        (current_value & !mask) | ((current_value.wrapping_sub(modification_value)) & mask)
+                        (current_value & !mask)
+                            | ((current_value.wrapping_sub(modification_value)) & mask)
                     };
 
                     for i in 0..bytes_to_read.min(4) {
@@ -267,7 +296,11 @@ impl Linker {
                         if *sign { "+" } else { "-" },
                         modification_value,
                         new_value,
-                        if variable.is_empty() { "<relocation>" } else { variable }
+                        if variable.is_empty() {
+                            "<relocation>"
+                        } else {
+                            variable
+                        }
                     ));
 
                     if !variable.is_empty() {
@@ -300,5 +333,3 @@ impl Linker {
         self.control_sections.clone()
     }
 }
-
-

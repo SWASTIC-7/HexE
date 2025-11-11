@@ -28,12 +28,12 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
     EXTERNALDEFS.lock().unwrap().clear();
     EXTERNALREFS.lock().unwrap().clear();
 
-        let program_blocks = PROGRAMBLOCK.lock().unwrap().clone();
-        let object_records = OBJECTPROGRAM.lock().unwrap().clone();
-        let control_sections: Vec<ControlSection> = {
-            log_warning("Linker unavailable; proceeding without relocation");
-            Vec::new()
-        };
+    let program_blocks = PROGRAMBLOCK.lock().unwrap().clone();
+    let object_records = OBJECTPROGRAM.lock().unwrap().clone();
+    let control_sections: Vec<ControlSection> = {
+        log_warning("Linker unavailable; proceeding without relocation");
+        Vec::new()
+    };
 
     for lines in object_records.iter() {
         match lines {
@@ -45,10 +45,8 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 starting_addr = *start;
                 program_name = name.clone();
 
-                current_control_section = control_sections
-                    .iter()
-                    .find(|cs| cs.name == *name)
-                    .cloned();
+                current_control_section =
+                    control_sections.iter().find(|cs| cs.name == *name).cloned();
 
                 if let Some(ref cs) = current_control_section {
                     log_info(&format!(
@@ -313,7 +311,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
             }
             ObjectRecord::End { start } => {
                 let end_start_addr = *start;
-                
+
                 // Check if it matches either original or relocated start
                 let matches = if let Some(ref cs) = current_control_section {
                     end_start_addr == cs.original_start || end_start_addr == cs.load_address
@@ -374,10 +372,9 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
 
         for (mod_addr, mod_length, sign, variable) in &modification_records {
             // Find which control section this modification belongs to
-            let relocated_mod_addr = if let Some(cs) = control_sections
-                .iter()
-                .find(|cs| *mod_addr >= cs.original_start && *mod_addr < cs.original_start + cs.length)
-            {
+            let relocated_mod_addr = if let Some(cs) = control_sections.iter().find(|cs| {
+                *mod_addr >= cs.original_start && *mod_addr < cs.original_start + cs.length
+            }) {
                 let relocation_factor = cs.load_address as i32 - cs.original_start as i32;
                 (*mod_addr as i32 + relocation_factor) as u32
             } else {

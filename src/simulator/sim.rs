@@ -44,7 +44,9 @@ impl Simulator {
     }
 
     pub fn load_program(&mut self) {
-        log_info("Loading program (linker not used; initializing from OBJECTPROGRAM and disassembler)");
+        log_info(
+            "Loading program (linker not used; initializing from OBJECTPROGRAM and disassembler)",
+        );
 
         let _object_program = OBJECTPROGRAM.lock().unwrap().clone();
 
@@ -52,7 +54,10 @@ impl Simulator {
 
         if self.program_start != 0 {
             self.machine.reg_pc = self.program_start;
-            log_info(&format!("Program start found at {:06X}", self.program_start));
+            log_info(&format!(
+                "Program start found at {:06X}",
+                self.program_start
+            ));
         } else {
             log_info("No program header found; PC remains at default");
         }
@@ -282,10 +287,7 @@ impl Simulator {
             log_info(&format!("Breakpoint added at {:06X}", address));
         }
     }
-
- 
 }
-
 
 pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
     log_info("Starting TUI simulator");

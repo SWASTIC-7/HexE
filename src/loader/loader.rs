@@ -1,5 +1,5 @@
 use crate::error::{log_info, log_warning};
-use crate::predefined::common::{ OBJECTPROGRAM, ObjectRecord};
+use crate::predefined::common::{OBJECTPROGRAM, ObjectRecord};
 use crate::predefined::opcode::get_instruction_format;
 
 //Object program structure
@@ -168,8 +168,11 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
                 let variable = sign_and_var[1..].to_string();
 
                 log_info(&format!(
-                    "Loaded modification record: address {:06X}, length {} half-bytes, {}{}", 
-                    address, length, if sign { "+" } else { "-" }, variable
+                    "Loaded modification record: address {:06X}, length {} half-bytes, {}{}",
+                    address,
+                    length,
+                    if sign { "+" } else { "-" },
+                    variable
                 ));
 
                 let parsed_obj = ObjectRecord::Modification {
@@ -209,9 +212,7 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
 
                     log_info(&format!("Loaded refer record: {}", symbol_name));
 
-                    let parsed_obj = ObjectRecord::Refer {
-                        name: symbol_name,
-                    };
+                    let parsed_obj = ObjectRecord::Refer { name: symbol_name };
                     parsed_obj_prog.push(parsed_obj);
                     offset += 6;
                 }
@@ -221,6 +222,6 @@ pub fn loader(buffer: String) -> Vec<ObjectRecord> {
             }
         }
     }
-    
+
     parsed_obj_prog.clone()
 }

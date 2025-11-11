@@ -40,6 +40,7 @@ mod simulator_tests {
             }),
             address: Some(0x42),
             reg: None,
+            modification: None,
         };
 
         sim.execute_instruction(&token);
@@ -81,6 +82,7 @@ mod simulator_tests {
             flags: None,
             address: None,
             reg: None,
+            modification: None,
         };
 
         sim.execute_instruction(&token);
@@ -114,6 +116,7 @@ mod simulator_tests {
             }),
             address: Some(0x1000),
             reg: None,
+            modification: None,
         };
 
         sim.execute_instruction(&token);
@@ -183,6 +186,7 @@ mod simulator_tests {
             }),
             address: Some(0x10000),
             reg: None,
+            modification: None,
         };
 
         sim.execute_instruction(&token);

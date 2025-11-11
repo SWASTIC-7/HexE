@@ -1,6 +1,7 @@
 use crate::error::{log_error, log_info, log_warning};
 use crate::predefined::common::{
-    AddressFlags, Command, DisAssembledToken, Instruction, OBJECTPROGRAM, ObjectRecord, OpCode, Reg,
+    AddressFlags, Command, DisAssembledToken, Instruction, ModificationInfo, OBJECTPROGRAM,
+    ObjectRecord, OpCode, Reg,
 };
 use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
@@ -18,7 +19,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
     let mut starting_addr = 0u32;
     let mut locctr: u32;
     let mut parsed_dissassembled_code: Vec<DisAssembledToken> = Vec::new();
-    let modification_addresses: Vec<(u32, u8)> = Vec::new();
+    let mut modification_records: Vec<(u32, u8, bool, String)> = Vec::new();
 
     for lines in OBJECTPROGRAM.lock().unwrap().iter() {
         match lines {
@@ -68,6 +69,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                 flags: None,
                                 address: None,
                                 reg: None,
+                                modification: None,
                             };
                             parsed_dissassembled_code.push(code_line);
                             1 // Return instruction size
@@ -113,6 +115,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                     r1: r1_name,
                                     r2: r2_name,
                                 }),
+                                modification: None,
                             };
                             parsed_dissassembled_code.push(code_line);
                             2 // Return instruction size
@@ -151,6 +154,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                 flags: Some(flags),
                                 address: Some(displacement as u32),
                                 reg: None,
+                                modification: None,
                             };
                             parsed_dissassembled_code.push(code_line);
                             3 // Return instruction size
@@ -191,6 +195,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                                 flags: Some(flags),
                                 address: Some(displacement),
                                 reg: None,
+                                modification: None,
                             };
                             parsed_dissassembled_code.push(code_line);
                             4 // Return instruction size
@@ -224,15 +229,18 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                     log_info("File disassembled successfully");
 
                     // Log modification records
-                    if !modification_addresses.is_empty() {
+                    if !modification_records.is_empty() {
                         log_info(&format!(
                             "Found {} modification records",
-                            modification_addresses.len()
+                            modification_records.len()
                         ));
-                        for (addr, len) in &modification_addresses {
+                        for (addr, len, sign, variable) in &modification_records {
                             log_info(&format!(
-                                "  Modification at {:06X}, length: {} half-bytes",
-                                addr, len
+                                "  Modification at {:06X}, length: {} half-bytes, {} {}",
+                                addr,
+                                len,
+                                if *sign { "+" } else { "-" },
+                                variable
                             ));
                         }
                     }
@@ -246,16 +254,60 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 }
             }
             ObjectRecord::Modification {
-                address: _,
-                length: _,
-                sign: _,
-                variable: _,
+                address,
+                length,
+                sign,
+                variable,
             } => {
-                // modification_addresses.push((*address, *length));
-                // log_info(&format!(
-                //     "Modification record at address {:06X}, length: {} half-bytes (modifying {} bits)",
-                //     address, length, length * 4
-                // ));
+                modification_records.push((*address, *length, *sign, variable.clone()));
+                log_info(&format!(
+                    "Modification record at address {:06X}, length: {} half-bytes (modifying {} bits), {} {}",
+                    address,
+                    length,
+                    length * 4,
+                    if *sign { "+" } else { "-" },
+                    variable
+                ));
+            }
+        }
+    }
+
+    // Apply modifications to the disassembled instructions
+    if !modification_records.is_empty() {
+        log_info(&format!(
+            "Applying {} modification records",
+            modification_records.len()
+        ));
+
+        for (mod_addr, mod_length, sign, variable) in &modification_records {
+            // Find the instruction that contains this modification address
+            if let Some(instruction) = parsed_dissassembled_code.iter_mut().find(|token| {
+                let instr_addr = token.locctr;
+                let instr_size = match &token.command {
+                    Command::Instruction(instr) => instr.opcode.format as u32,
+                    _ => 0,
+                };
+                *mod_addr >= instr_addr && *mod_addr < instr_addr + instr_size
+            }) {
+                log_info(&format!(
+                    "  Applying modification to instruction at {:06X}: {} {} (length: {} half-bytes)",
+                    instruction.locctr,
+                    if *sign { "+" } else { "-" },
+                    variable,
+                    mod_length
+                ));
+
+                // Store modification information
+                instruction.modification = Some(ModificationInfo {
+                    symbol: variable.clone(),
+                    sign: *sign,
+                    length: *mod_length,
+                });
+            } else {
+                log_warning(&format!(
+                    "  Modification record at {:06X} doesn't match any instruction",
+                    mod_addr
+                ));
             }
         }
     }
@@ -317,6 +369,15 @@ fn format_disassembled_instruction(token: &DisAssembledToken) -> String {
                         }
 
                         result.push_str(&format!(" {}", operand));
+
+                        // Add modification info if present
+                        if let Some(mod_info) = &token.modification {
+                            result.push_str(&format!(
+                                " [EXT: {}{}]",
+                                if mod_info.sign { "+" } else { "-" },
+                                mod_info.symbol
+                            ));
+                        }
 
                         // Add addressing mode indicators
                         let mut mode_info = String::new();

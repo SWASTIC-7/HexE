@@ -116,6 +116,15 @@ pub struct DisAssembledToken {
     pub flags: Option<AddressFlags>,
     pub address: Option<u32>,
     pub reg: Option<Reg>,
+    pub modification: Option<ModificationInfo>,
+}
+
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct ModificationInfo {
+    pub symbol: String,
+    pub sign: bool, // true for +, false for -
+    pub length: u8, // in half-bytes
 }
 
 #[derive(Debug, Clone)]

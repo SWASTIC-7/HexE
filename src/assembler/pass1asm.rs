@@ -41,6 +41,7 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
     let mut current_block: usize = 0;
     let mut block_counter: u32 = 0;
 
+    blocks.clear();
     blocks.push(ProgramBlock {
         name: "(default)".to_string(),
         number: 0,
@@ -103,6 +104,12 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
                             if let Some(value) = num {
                                 startaddr = value;
                                 locctr = value;
+
+                                // Update default block's start address
+                                if let Some(default_block) = blocks.get_mut(0) {
+                                    default_block.start_address = value;
+                                }
+
                                 if let Some(label) = lines.label.clone() {
                                     symbol_table.push(SymbolTable {
                                         label,
@@ -173,24 +180,33 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
                             if current_block < blocks.len() {
                                 blocks[current_block].length =
                                     locctr - blocks[current_block].start_address;
+                                log_info(&format!(
+                                    "Block '{}' updated: start={:04X}, length={:04X}",
+                                    blocks[current_block].name,
+                                    blocks[current_block].start_address,
+                                    blocks[current_block].length
+                                ));
                             }
 
                             let block_name =
                                 lines.operand1.clone().unwrap_or("(default)".to_string());
+
                             if let Some(pos) = blocks.iter().position(|b| b.name == block_name) {
                                 current_block = pos;
                                 locctr = blocks[current_block].start_address
                                     + blocks[current_block].length;
+                                log_info(&format!(
+                                    "Switched to existing block '{}' at {:04X}",
+                                    block_name, locctr
+                                ));
                             } else {
                                 block_counter += 1;
-                                let new_start = if block_counter == 1 {
-                                    blocks[0].start_address + blocks[0].length
-                                } else {
-                                    blocks
-                                        .last()
-                                        .map(|b| b.start_address + b.length)
-                                        .unwrap_or(0)
-                                };
+
+                                let new_start = blocks
+                                    .iter()
+                                    .map(|b| b.start_address + b.length)
+                                    .max()
+                                    .unwrap_or(0);
 
                                 blocks.push(ProgramBlock {
                                     name: block_name.clone(),
@@ -303,6 +319,8 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
             }
         }
     }
+
+    // Update final block's length
     if current_block < blocks.len() {
         blocks[current_block].length = locctr - blocks[current_block].start_address;
     }

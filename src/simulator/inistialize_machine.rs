@@ -10,13 +10,9 @@ pub struct Machine {
     pub reg_f: f64,  // Floating point
     pub reg_pc: u32, // Program counter
     pub reg_sw: u32, // Status word
-
     // Memory
     pub memory: Vec<u8>,
-
-    // Control
-    // pub running: bool,
-    pub cc: i8, // Condition code (-1, 0, 1)
+    pub cc: i32, // Condition Code: -1 (less), 0 (equal), 1 (greater)
 }
 
 impl Default for Machine {
@@ -28,6 +24,7 @@ impl Default for Machine {
 impl Machine {
     pub fn new() -> Self {
         Machine {
+            memory: vec![0; 1_000_000], // 1MB
             reg_a: 0,
             reg_x: 0,
             reg_l: 0,
@@ -37,8 +34,6 @@ impl Machine {
             reg_f: 0.0,
             reg_pc: 0,
             reg_sw: 0,
-            memory: vec![0; 1048576], // 1MB
-            // running: false,
             cc: 0,
         }
     }

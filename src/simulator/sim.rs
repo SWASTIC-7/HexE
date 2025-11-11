@@ -3,9 +3,10 @@ use super::opcode_implementation::{AddressingMode, Opcode};
 use super::{name_to_opcode, register_name_to_code};
 use crate::disassembler::disassembler;
 use crate::error::{log_error, log_info};
+use crate::loader::linker::link_and_load;
 use crate::predefined::common::{
     AddressFlags, Command, DisAssembledToken, LITERALTABLE, OBJECTPROGRAM, ObjectRecord,
-    SYMBOLTABLE,
+    PROGRAMBLOCK, SYMBOLTABLE,
 };
 use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
@@ -44,33 +45,80 @@ impl Simulator {
     }
 
     pub fn load_program(&mut self) {
-        log_info(
-            "Loading program (linker not used; initializing from OBJECTPROGRAM and disassembler)",
-        );
+        log_info("Loading program with linker support");
 
-        let _object_program = OBJECTPROGRAM.lock().unwrap().clone();
+        let object_program = OBJECTPROGRAM.lock().unwrap().clone();
 
-        self.find_program_start_from_header();
+        // Use linker to properly relocate and link the program
+        match link_and_load(vec![object_program], 0x0000) {
+            Ok(linked_program) => {
+                self.program_start = linked_program.start_address;
+                self.machine.reg_pc = self.program_start;
 
-        if self.program_start != 0 {
-            self.machine.reg_pc = self.program_start;
-            log_info(&format!(
-                "Program start found at {:06X}",
-                self.program_start
-            ));
-        } else {
-            log_info("No program header found; PC remains at default");
-        }
+                // Load linked memory into machine
+                for (i, &byte) in linked_program.memory.iter().enumerate() {
+                    let addr = self.program_start as usize + i;
+                    if addr < self.machine.memory.len() {
+                        self.machine.memory[addr] = byte;
+                    }
+                }
 
-        self.instructions = disassembler::disassemble();
-        log_info(&format!("Loaded {} instructions", self.instructions.len()));
+                log_info(&format!(
+                    "Program loaded at {:06X}, length: {:06X} bytes",
+                    self.program_start, linked_program.program_length
+                ));
 
-        if let Some(first_instr) = self.instructions.first() {
-            self.machine.reg_pc = first_instr.locctr;
-            log_info(&format!(
-                "PC set to first instruction at {:06X}",
-                self.machine.reg_pc
-            ));
+                // Log control sections
+                for cs in &linked_program.control_sections {
+                    log_info(&format!(
+                        "  Control section '{}': {:06X} - {:06X} (relocated from {:06X})",
+                        cs.name,
+                        cs.load_address,
+                        cs.load_address + cs.length,
+                        cs.original_start
+                    ));
+                }
+
+                // Disassemble the linked program (disassembler will use linker info)
+                self.instructions = disassembler::disassemble();
+                log_info(&format!("Loaded {} instructions", self.instructions.len()));
+
+                // Set PC to first instruction if available
+                if let Some(first_instr) = self.instructions.first() {
+                    self.machine.reg_pc = first_instr.locctr;
+                    log_info(&format!(
+                        "PC set to first instruction at {:06X}",
+                        self.machine.reg_pc
+                    ));
+                }
+            }
+            Err(e) => {
+                log_error(&format!("Failed to link program: {}", e));
+                log_info("Falling back to basic loading without linking");
+
+                self.find_program_start_from_header();
+
+                if self.program_start != 0 {
+                    self.machine.reg_pc = self.program_start;
+                    log_info(&format!(
+                        "Program start found at {:06X}",
+                        self.program_start
+                    ));
+                } else {
+                    log_info("No program header found; PC remains at default");
+                }
+
+                self.instructions = disassembler::disassemble();
+                log_info(&format!("Loaded {} instructions", self.instructions.len()));
+
+                if let Some(first_instr) = self.instructions.first() {
+                    self.machine.reg_pc = first_instr.locctr;
+                    log_info(&format!(
+                        "PC set to first instruction at {:06X}",
+                        self.machine.reg_pc
+                    ));
+                }
+            }
         }
     }
 
@@ -134,6 +182,7 @@ impl Simulator {
             Command::Instruction(instr) => {
                 let opcode_byte = instr.opcode.code;
                 let format = instr.opcode.format;
+                let current_pc = self.machine.reg_pc;
 
                 // Convert opcode byte to Opcode enum
                 if let Some(opcode) = self.byte_to_opcode(opcode_byte) {
@@ -141,25 +190,37 @@ impl Simulator {
                         1 => {
                             // Format 1: No operand
                             opcode.execute(&mut self.machine, 0, AddressingMode::Direct);
-                            self.machine.reg_pc += 1;
+                            // Only increment if PC wasn't modified by instruction
+                            if self.machine.reg_pc == current_pc {
+                                self.machine.reg_pc += 1;
+                            }
                         }
                         2 => {
                             // Format 2: Register operations
                             let operand = self.get_format2_operand(token);
                             opcode.execute(&mut self.machine, operand, AddressingMode::Direct);
-                            self.machine.reg_pc += 2;
+                            // Only increment if PC wasn't modified by instruction
+                            if self.machine.reg_pc == current_pc {
+                                self.machine.reg_pc += 2;
+                            }
                         }
                         3 => {
-                            // Format 3: Memory operations with 12-bit displacement
+                            // Format 3: Memory operations
                             let (operand, mode) = self.get_format3_operand(token);
                             opcode.execute(&mut self.machine, operand, mode);
-                            self.machine.reg_pc += 3;
+                            // Only increment if PC wasn't modified by jump instruction
+                            if self.machine.reg_pc == current_pc {
+                                self.machine.reg_pc += 3;
+                            }
                         }
                         4 => {
-                            // Format 4: Extended format with 20-bit address
+                            // Format 4: Extended format
                             let (operand, mode) = self.get_format4_operand(token);
                             opcode.execute(&mut self.machine, operand, mode);
-                            self.machine.reg_pc += 4;
+                            // Only increment if PC wasn't modified by jump instruction
+                            if self.machine.reg_pc == current_pc {
+                                self.machine.reg_pc += 4;
+                            }
                         }
                         _ => {
                             log_error(&format!("Unknown instruction format: {}", format));
@@ -313,6 +374,9 @@ pub fn calling_tui() -> Result<(), Box<dyn std::error::Error>> {
 
     let literal_table = LITERALTABLE.lock().unwrap().clone();
     tui.update_literal_table(literal_table);
+
+    let program_blocks = PROGRAMBLOCK.lock().unwrap().clone();
+    tui.update_program_blocks(program_blocks);
 
     // Auto-focus memory on the object code location
     tui.auto_focus_memory();

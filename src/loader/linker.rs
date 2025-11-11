@@ -333,3 +333,14 @@ impl Linker {
         self.control_sections.clone()
     }
 }
+
+pub fn link_and_load(
+    object_programs: Vec<Vec<ObjectRecord>>,
+    start_address: u32,
+) -> Result<LinkedProgram, String> {
+    let mut linker = Linker::new(start_address);
+
+    let all_records: Vec<ObjectRecord> = object_programs.into_iter().flatten().collect();
+
+    linker.link_object_programs(&all_records)
+}

@@ -45,6 +45,10 @@ cargo run -- program.txt
 
 The interactive debugger provides real-time visualization of the machine state during program execution.
 
+## Log check
+
+To check logs check the ```simulator.log``` file in the root directory, formed after running the tui.
+
 ### Interface Components
 
 | Component | Description |

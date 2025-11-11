@@ -1,48 +1,24 @@
-COPY    START   0
+COPY    START   1000
+        USE     MAIN
 FIRST   STL     RETADR
 CLOOP   JSUB    RDREC
         LDA     LENGTH
-        COMP    #0
+        COMP    ZERO
         JEQ     ENDFIL
         JSUB    WRREC
         J       CLOOP
-ENDFIL  LDA     =C'EOF'
-        STA     BUFFER
-        LDA     #3
+
+ENDFIL  LDA     ZERO        
         STA     LENGTH
-        JSUB    WRREC
-        J       @RETADR
+        RSUB
+
+        USE     DATA
+ZERO    WORD    0
 RETADR  RESW    1
 LENGTH  RESW    1
-BUFFER  RESB    4096
-BUFEND  EQU     *
-MAXLEN  EQU     BUFEND-BUFFER
 
-        USE
-RDREC   CLEAR   X
-        CLEAR   A
-        CLEAR   S
-        +LDT    #MAXLEN
-RLOOP   TD      INPUT
-        JEQ     RLOOP
-        RD      INPUT
-        COMPR   A,S
-        JEQ     EXIT
-        STCH    BUFFER,X
-        TIXR    T
-        JLT     RLOOP
-EXIT    STX     LENGTH
-        RSUB
-INPUT   BYTE    X'F1'
+        USE     CODE
+RDREC   RESW    1
+WRREC   RESW    1
 
-        USE
-WRREC   CLEAR   X
-        LDT     LENGTH
-WLOOP   TD      =X'05'
-        JEQ     WLOOP
-        LDCH    BUFFER,X
-        WD      =X'05'
-        TIXR    T
-        JLT     WLOOP
-        RSUB
         END     FIRST

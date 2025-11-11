@@ -215,7 +215,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                     name, address
                 ));
             }
-            ObjectRecord::Refer { name, address: _ } => {
+            ObjectRecord::Refer { name } => {
                 log_info(&format!("External reference: {}", name));
             }
             ObjectRecord::End { start } => {

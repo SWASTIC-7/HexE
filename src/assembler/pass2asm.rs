@@ -43,7 +43,6 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                     object_program.push(header_record(prog_name, len, start_addr))
                 }
                 "EXTDEF" => {
-                    // Parse comma-separated list of symbols
                     if let Some(operand) = &lines.parsedtoken.operand1 {
                         let symbols: Vec<&str> = operand.split(',').map(|s| s.trim()).collect();
                         for symbol in symbols {
@@ -66,13 +65,11 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                     }
                 }
                 "EXTREF" => {
-                    // Parse comma-separated list of external references
                     if let Some(operand) = &lines.parsedtoken.operand1 {
                         let symbols: Vec<&str> = operand.split(',').map(|s| s.trim()).collect();
                         for symbol in symbols {
                             refer_records.push(ObjectRecord::Refer {
                                 name: symbol.to_string(),
-                                address: 0, // External references don't have addresses yet
                             });
                             log_info(&format!("EXTREF: {}", symbol));
                         }
@@ -300,6 +297,7 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                 }
             }
         }
+        log_info(&format!("{:?}", &object_program.to_vec()));
     }
 
     object_program.to_vec()
@@ -337,11 +335,22 @@ pub fn object_code1(opcode: u8) -> String {
 //object code for fromat 3
 pub fn object_code2(opcode: u8, operand1: &Option<String>, operand2: &Option<String>) -> String {
     let reg = registers::register_map();
-    let r1 = operand1.as_ref().unwrap().to_uppercase();
-    let r2 = operand2.as_ref().unwrap().to_uppercase();
-    let r1_code = reg.get(r1.as_str()).expect("error getting r1 hexcode");
-    let r2_code = reg.get(r2.as_str()).expect("error getting r2 hexcode");
-
+    let r1 = operand1.as_ref().expect("r1 required").to_uppercase();
+    print!("{r1}");
+    let r1_code = if let Some(&code) = reg.get(r1.as_str()) {
+        code
+    } else if let Ok(num) = r1.parse::<u8>() {
+        num // For SVC, e.g., "3"
+    } else {
+        panic!("Invalid operand1: expected register or integer");
+    };
+    let r2_code = operand2
+        .as_ref()
+        .map(|r| {
+            let r = r.to_uppercase();
+            *reg.get(r.as_str()).expect("error getting r2 hexcode")
+        })
+        .unwrap_or(0);
     let combined_reg = (r1_code << 4) | r2_code;
 
     format!("{:02X}{:02X}", opcode, combined_reg)

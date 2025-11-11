@@ -596,3 +596,4 @@ impl Opcode {
         // Could trigger system call handling
     }
 }
+//TODO: SVC command has to be handeled pefectly

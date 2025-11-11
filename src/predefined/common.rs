@@ -31,7 +31,6 @@ pub enum ObjectRecord {
     },
     Refer {
         name: String,
-        address: u32,
     },
     End {
         start: u32,

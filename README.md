@@ -4,6 +4,8 @@ A comprehensive toolchain for the SIC/XE (Simplified Instructional Computer - Ex
 
 ![TUI Simulator](reference_material/tui_small.png)
 
+[Visit the website](https://hex-e-website.vercel.app/)
+
 ## Features
 
 - **Two-Pass Assembler**: Generates symbol tables and object code with full support for SIC/XE instruction formats

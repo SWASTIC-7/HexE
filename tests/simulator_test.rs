@@ -1,6 +1,4 @@
-use hexe::predefined::common::{
-    AddressFlags, Command, DisAssembledToken, Instruction, OBJECTPROGRAM, ObjectRecord, OpCode,
-};
+use hexe::predefined::common::{AddressFlags, Command, DisAssembledToken, Instruction, OpCode};
 use hexe::simulator::sim::Simulator;
 
 #[cfg(test)]

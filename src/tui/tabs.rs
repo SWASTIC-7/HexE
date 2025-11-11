@@ -112,7 +112,17 @@ impl TabsWidget {
                         sign,
                         variable,
                     } => {
-                        format!("M  {:06X}  {:02} {:01} {}", address, length, sign, variable)
+                        let sign_char = if *sign { '+' } else { '-' };
+                        format!(
+                            "M  {:06X}  {:02X}  {}{}",
+                            address, length, sign_char, variable
+                        )
+                    }
+                    ObjectRecord::Define { name, address } => {
+                        format!("D  {}  {:06X}", name, address)
+                    }
+                    ObjectRecord::Refer { name, .. } => {
+                        format!("R  {}", name)
                     }
                 };
                 ListItem::new(text)

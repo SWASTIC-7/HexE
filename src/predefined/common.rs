@@ -25,6 +25,14 @@ pub enum ObjectRecord {
         sign: bool, // true == + && false == -
         variable: String,
     },
+    Define {
+        name: String,
+        address: u32,
+    },
+    Refer {
+        name: String,
+        address: u32,
+    },
     End {
         start: u32,
     },

@@ -209,6 +209,15 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                     locctr += instruction_size;
                 }
             }
+            ObjectRecord::Define { name, address } => {
+                log_info(&format!(
+                    "Define record: {} at address {:06X}",
+                    name, address
+                ));
+            }
+            ObjectRecord::Refer { name, address: _ } => {
+                log_info(&format!("External reference: {}", name));
+            }
             ObjectRecord::End { start } => {
                 let end_start_addr = *start;
                 if end_start_addr == starting_addr {

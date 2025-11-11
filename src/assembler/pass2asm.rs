@@ -25,6 +25,8 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
         objcodes: Vec::new(),
     };
     let mut modification_records: Vec<ObjectRecord> = Vec::new();
+    let mut define_records: Vec<ObjectRecord> = Vec::new();
+    let mut refer_records: Vec<ObjectRecord> = Vec::new();
 
     for lines in labeled_parsed_lines.iter() {
         if text_length == 0 {
@@ -39,6 +41,42 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                 "START" => {
                     let prog_name = lines.parsedtoken.label.clone();
                     object_program.push(header_record(prog_name, len, start_addr))
+                }
+                "EXTDEF" => {
+                    // Parse comma-separated list of symbols
+                    if let Some(operand) = &lines.parsedtoken.operand1 {
+                        let symbols: Vec<&str> = operand.split(',').map(|s| s.trim()).collect();
+                        for symbol in symbols {
+                            if let Some(sym) = symbol_table.iter().find(|s| s.label == symbol) {
+                                define_records.push(ObjectRecord::Define {
+                                    name: symbol.to_string(),
+                                    address: sym.address,
+                                });
+                                log_info(&format!(
+                                    "EXTDEF: {} at address {:06X}",
+                                    symbol, sym.address
+                                ));
+                            } else {
+                                log_warning(&format!(
+                                    "EXTDEF symbol '{}' not found in symbol table",
+                                    symbol
+                                ));
+                            }
+                        }
+                    }
+                }
+                "EXTREF" => {
+                    // Parse comma-separated list of external references
+                    if let Some(operand) = &lines.parsedtoken.operand1 {
+                        let symbols: Vec<&str> = operand.split(',').map(|s| s.trim()).collect();
+                        for symbol in symbols {
+                            refer_records.push(ObjectRecord::Refer {
+                                name: symbol.to_string(),
+                                address: 0, // External references don't have addresses yet
+                            });
+                            log_info(&format!("EXTREF: {}", symbol));
+                        }
+                    }
                 }
                 "BASE" => {
                     let base_operand = lines.parsedtoken.operand1.clone().unwrap();
@@ -92,6 +130,37 @@ pub fn pass2asm(buffer: &str) -> Vec<ObjectRecord> {
                                 *length = text_length;
                             }
                             object_program.push(text.clone());
+                        }
+
+                        // Add Define records after Header
+                        if !define_records.is_empty() {
+                            let header_pos = object_program
+                                .iter()
+                                .position(|r| matches!(r, ObjectRecord::Header { .. }))
+                                .unwrap_or(0);
+                            for (i, define_record) in define_records.iter().enumerate() {
+                                object_program.insert(header_pos + 1 + i, define_record.clone());
+                            }
+                        }
+
+                        // Add Refer records after Define records
+                        if !refer_records.is_empty() {
+                            let insert_pos = if define_records.is_empty() {
+                                object_program
+                                    .iter()
+                                    .position(|r| matches!(r, ObjectRecord::Header { .. }))
+                                    .map(|p| p + 1)
+                                    .unwrap_or(1)
+                            } else {
+                                object_program
+                                    .iter()
+                                    .position(|r| matches!(r, ObjectRecord::Header { .. }))
+                                    .map(|p| p + 1 + define_records.len())
+                                    .unwrap_or(1)
+                            };
+                            for (i, refer_record) in refer_records.iter().enumerate() {
+                                object_program.insert(insert_pos + i, refer_record.clone());
+                            }
                         }
 
                         // Add all modification records before END record

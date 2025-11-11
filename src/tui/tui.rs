@@ -2,8 +2,8 @@ pub use super::disassembly;
 pub use super::memory;
 pub use super::registers;
 pub use super::tabs;
-
-use crate::predefined::common::{ObjectRecord, SymbolTable};
+use crate::error::log_info;
+use crate::predefined::common::{ExternalDefinition, ExternalReference, ObjectRecord, SymbolTable};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
@@ -208,6 +208,18 @@ impl Tui {
         program_blocks: Vec<crate::predefined::common::ProgramBlock>,
     ) {
         self.tabs.program_blocks = program_blocks;
+    }
+
+    pub fn update_external_definitions(&mut self, extdefs: Vec<ExternalDefinition>) {
+        // Store for potential display in tabs
+        // For now, this is just for future extension
+        log_info(&format!("Updated {} external definitions", extdefs.len()));
+    }
+
+    pub fn update_external_references(&mut self, extrefs: Vec<ExternalReference>) {
+        // Store for potential display in tabs
+        // For now, this is just for future extension
+        log_info(&format!("Updated {} external references", extrefs.len()));
     }
 
     pub fn move_focus_left(&mut self) {

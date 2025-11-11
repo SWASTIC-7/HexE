@@ -227,6 +227,24 @@ pub fn pass1asm(buffer: &str) -> (Vec<LabeledParsedLines>, u32, u32, Vec<SymbolT
                             };
                             locctr = address;
                         }
+                        "EXTDEF" => {
+                            // EXTDEF doesn't affect locctr, just note it
+                            if let Some(operand) = &lines.operand1 {
+                                log_info(&format!(
+                                    "Found EXTDEF directive with symbols: {}",
+                                    operand
+                                ));
+                            }
+                        }
+                        "EXTREF" => {
+                            // EXTREF doesn't affect locctr, just note it
+                            if let Some(operand) = &lines.operand1 {
+                                log_info(&format!(
+                                    "Found EXTREF directive with symbols: {}",
+                                    operand
+                                ));
+                            }
+                        }
                         "WORD" => {
                             if let Some(label) = lines.label.clone() {
                                 symbol_table.push(SymbolTable {

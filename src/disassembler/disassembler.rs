@@ -1,7 +1,7 @@
 use crate::error::{log_error, log_info, log_warning};
 use crate::predefined::common::{
-    AddressFlags, Command, DisAssembledToken, Instruction, ModificationInfo, OBJECTPROGRAM,
-    ObjectRecord, OpCode, Reg,
+    AddressFlags, Command, DisAssembledToken, EXTERNALDEFS, EXTERNALREFS, ExternalDefinition,
+    ExternalReference, Instruction, ModificationInfo, OBJECTPROGRAM, ObjectRecord, OpCode, Reg,
 };
 use crate::predefined::opcode::reverse_optab;
 use crate::predefined::registers::reverse_register_map;
@@ -20,6 +20,11 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
     let mut locctr: u32;
     let mut parsed_dissassembled_code: Vec<DisAssembledToken> = Vec::new();
     let mut modification_records: Vec<(u32, u8, bool, String)> = Vec::new();
+    let mut program_name = String::from("UNKNOWN");
+
+    // Clear external symbol tables
+    EXTERNALDEFS.lock().unwrap().clear();
+    EXTERNALREFS.lock().unwrap().clear();
 
     for lines in OBJECTPROGRAM.lock().unwrap().iter() {
         match lines {
@@ -29,6 +34,7 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                 length,
             } => {
                 starting_addr = *start;
+                program_name = name.clone();
                 log_info(&format!(
                     "Program: {}, Start: {:06X}, Length: {:06X}",
                     name, start, length
@@ -219,9 +225,36 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                     "Define record: {} at address {:06X}",
                     name, address
                 ));
+
+                // Store external definition
+                let mut extdefs = EXTERNALDEFS.lock().unwrap();
+                extdefs.push(ExternalDefinition {
+                    name: name.clone(),
+                    address: *address,
+                    control_section: program_name.clone(),
+                });
+
+                log_info(&format!(
+                    "  Registered external definition: {} = {:06X} in control section '{}'",
+                    name, address, program_name
+                ));
             }
             ObjectRecord::Refer { name } => {
                 log_info(&format!("External reference: {}", name));
+
+                // Store external reference
+                let mut extrefs = EXTERNALREFS.lock().unwrap();
+                extrefs.push(ExternalReference {
+                    name: name.clone(),
+                    control_section: program_name.clone(),
+                    resolved: false,
+                    resolved_address: None,
+                });
+
+                log_info(&format!(
+                    "  Registered external reference: {} in control section '{}'",
+                    name, program_name
+                ));
             }
             ObjectRecord::End { start } => {
                 let end_start_addr = *start;
@@ -272,7 +305,9 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
         }
     }
 
-    // Apply modifications to the disassembled instructions
+    // After processing all records, attempt to resolve external references
+    resolve_external_references();
+
     if !modification_records.is_empty() {
         log_info(&format!(
             "Applying {} modification records",
@@ -280,7 +315,6 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
         ));
 
         for (mod_addr, mod_length, sign, variable) in &modification_records {
-            // Find the instruction that contains this modification address
             if let Some(instruction) = parsed_dissassembled_code.iter_mut().find(|token| {
                 let instr_addr = token.locctr;
                 let instr_size = match &token.command {
@@ -297,7 +331,6 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
                     mod_length
                 ));
 
-                // Store modification information
                 instruction.modification = Some(ModificationInfo {
                     symbol: variable.clone(),
                     sign: *sign,
@@ -317,7 +350,6 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
         parsed_dissassembled_code.len()
     ));
 
-    // Print disassembled instructions
     log_info("=== DISASSEMBLED PROGRAM ===");
     for item in &parsed_dissassembled_code {
         log_info(&format_disassembled_instruction(item));
@@ -326,19 +358,84 @@ pub fn disassemble() -> Vec<DisAssembledToken> {
     parsed_dissassembled_code
 }
 
-// Helper function to format disassembled instructions for display
+fn resolve_external_references() {
+    let extdefs = EXTERNALDEFS.lock().unwrap();
+    let mut extrefs = EXTERNALREFS.lock().unwrap();
+
+    if !extrefs.is_empty() {
+        log_info(&format!(
+            "=== RESOLVING {} EXTERNAL REFERENCES ===",
+            extrefs.len()
+        ));
+    }
+
+    for extref in extrefs.iter_mut() {
+        if let Some(def) = extdefs.iter().find(|d| d.name == extref.name) {
+            extref.resolved = true;
+            extref.resolved_address = Some(def.address);
+            log_info(&format!(
+                "  Resolved '{}' from '{}' -> {:06X} (defined in '{}')",
+                extref.name, extref.control_section, def.address, def.control_section
+            ));
+        } else {
+            log_warning(&format!(
+                "  Unresolved external reference: '{}' in control section '{}'",
+                extref.name, extref.control_section
+            ));
+        }
+    }
+
+    // Log summary
+    if !extdefs.is_empty() {
+        log_info(&format!(
+            "=== EXTERNAL DEFINITIONS ({} entries) ===",
+            extdefs.len()
+        ));
+        for def in extdefs.iter() {
+            log_info(&format!(
+                "  {} @ {:06X} ({})",
+                def.name, def.address, def.control_section
+            ));
+        }
+    }
+
+    if !extrefs.is_empty() {
+        let resolved_count = extrefs.iter().filter(|r| r.resolved).count();
+        let unresolved_count = extrefs.len() - resolved_count;
+
+        log_info(&format!(
+            "=== EXTERNAL REFERENCES ({} total: {} resolved, {} unresolved) ===",
+            extrefs.len(),
+            resolved_count,
+            unresolved_count
+        ));
+
+        for extref in extrefs.iter() {
+            if extref.resolved {
+                log_info(&format!(
+                    "  {} -> {:06X} ({})",
+                    extref.name,
+                    extref.resolved_address.unwrap(),
+                    extref.control_section
+                ));
+            } else {
+                log_info(&format!(
+                    "  {} -> UNRESOLVED ({})",
+                    extref.name, extref.control_section
+                ));
+            }
+        }
+    }
+}
+
 fn format_disassembled_instruction(token: &DisAssembledToken) -> String {
     match &token.command {
         Command::Instruction(instr) => {
             let mut result = format!("{:06X}  {:<8}", token.locctr, instr.instr);
 
             match instr.opcode.format {
-                1 => {
-                    // Format 1: Just opcode
-                    result
-                }
+                1 => result,
                 2 => {
-                    // Format 2: Register operations
                     if let Some(reg) = &token.reg {
                         result.push_str(&format!(" {},{}", reg.r1, reg.r2));
                     }
@@ -370,7 +467,6 @@ fn format_disassembled_instruction(token: &DisAssembledToken) -> String {
 
                         result.push_str(&format!(" {}", operand));
 
-                        // Add modification info if present
                         if let Some(mod_info) = &token.modification {
                             result.push_str(&format!(
                                 " [EXT: {}{}]",
@@ -379,7 +475,6 @@ fn format_disassembled_instruction(token: &DisAssembledToken) -> String {
                             ));
                         }
 
-                        // Add addressing mode indicators
                         let mut mode_info = String::new();
                         if flags.p {
                             mode_info.push_str(" [PC-rel]");

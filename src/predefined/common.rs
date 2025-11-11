@@ -5,6 +5,8 @@ pub static OBJECTPROGRAM: Lazy<Mutex<Vec<ObjectRecord>>> = Lazy::new(|| Mutex::n
 pub static SYMBOLTABLE: Lazy<Mutex<Vec<SymbolTable>>> = Lazy::new(|| Mutex::new(vec![]));
 pub static LITERALTABLE: Lazy<Mutex<Vec<LiteralTable>>> = Lazy::new(|| Mutex::new(vec![]));
 pub static PROGRAMBLOCK: Lazy<Mutex<Vec<ProgramBlock>>> = Lazy::new(|| Mutex::new(vec![]));
+pub static EXTERNALDEFS: Lazy<Mutex<Vec<ExternalDefinition>>> = Lazy::new(|| Mutex::new(vec![]));
+pub static EXTERNALREFS: Lazy<Mutex<Vec<ExternalReference>>> = Lazy::new(|| Mutex::new(vec![]));
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -141,4 +143,19 @@ pub struct ProgramBlock {
     pub number: u32,
     pub start_address: u32,
     pub length: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternalDefinition {
+    pub name: String,
+    pub address: u32,
+    pub control_section: String, // Which program defined this symbol
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternalReference {
+    pub name: String,
+    pub control_section: String, // Which program references this symbol
+    pub resolved: bool,
+    pub resolved_address: Option<u32>,
 }
